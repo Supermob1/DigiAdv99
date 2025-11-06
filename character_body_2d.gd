@@ -8,11 +8,29 @@ var _is_running: bool = false
 var _last_facing: Vector2 = Vector2.DOWN  # default facing down
 
 @onready var anim: AnimatedSprite2D = $AnimatedSprite2D
+@onready var hitbox_area: Area2D = $Area2D
+@onready var hitbox_shape: CollisionShape2D = $Area2D/Hitbox
+
+func _ready() -> void:
+	# --- Physics layers/masks (example) ---
+	# Player body: layer 2, collides only with world (layer 1)
+	collision_layer = 1 << 1
+	collision_mask  = 1 << 0
+
+	# Hitbox: layer 4, no mask yet (doesn't hit anything until you decide)
+	hitbox_area.collision_layer = 1 << 3
+	hitbox_area.collision_mask  = 0
+	# If later you add NPC/monster hurtboxes, you can set:
+	# hitbox_area.collision_mask = 1 << 4
+
+	_update_hitbox_offset()  # put hitbox in front of starting facing dir
+
 
 func _physics_process(delta: float) -> void:
 	_read_input()
 	_move_player(delta)
 	_update_animation()
+	_update_hitbox_offset()
 
 
 func _read_input() -> void:
@@ -21,7 +39,7 @@ func _read_input() -> void:
 
 	_input_dir = Vector2.ZERO
 
-	# Prioritize the axis with the stronger input
+	# Prioritize the axis with the stronger input (no diagonal)
 	if abs(x) > abs(y):
 		_input_dir.x = sign(x)
 	elif abs(y) > 0:
@@ -67,3 +85,22 @@ func _direction_to_string(dir: Vector2) -> String:
 	else:
 		# Up or down
 		return "down" if dir.y > 0.0 else "up"
+
+
+func _update_hitbox_offset() -> void:
+	# Move the Area2D in front of the player based on facing direction
+	var offset_dist := 8.0  # tweak for how far in front the hitbox is
+	var offset := Vector2.ZERO
+	var dir_name := _direction_to_string(_last_facing)
+
+	match dir_name:
+		"up":
+			offset = Vector2(0, -offset_dist)
+		"down":
+			offset = Vector2(0, offset_dist)
+		"left":
+			offset = Vector2(-offset_dist, 0)
+		"right":
+			offset = Vector2(offset_dist, 0)
+
+	hitbox_area.position = offset

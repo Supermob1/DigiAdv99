@@ -1,7 +1,6 @@
-[gd_scene load_steps=5 format=4 uid="uid://d1ltns4pdy41x"]
+[gd_scene load_steps=4 format=4 uid="uid://d1ltns4pdy41x"]
 
 [ext_resource type="Texture2D" uid="uid://bep30cvmggepv" path="res://textures/Tileset.png" id="1_f3sb7"]
-[ext_resource type="PackedScene" uid="uid://bogenmusul5ii" path="res://character_body_2d.tscn" id="2_fj7yv"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_fj7yv"]
 texture = ExtResource("1_f3sb7")
@@ -164,5 +163,3 @@ sources/0 = SubResource("TileSetAtlasSource_fj7yv")
 [node name="Ground" type="TileMapLayer" parent="."]
 tile_map_data = PackedByteArray("AAABAAEAAAAIAA0AAAACAAEAAAAMAAwAAAABAAAAAAAIAAwAAAACAAAAAAAKAAwAAAACAAMAAAAJAA4AAAABAAMAAAAIAA4AAAABAAIAAAAIAA0AAAACAAIAAAAJAA0AAAADAAEAAAAKAAwAAAADAAIAAAAKAA0AAAADAAMAAAAKAA4AAAA=")
 tile_set = SubResource("TileSet_tlwt5")
-
-[node name="Player" parent="." instance=ExtResource("2_fj7yv")]
