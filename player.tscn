@@ -13,6 +13,7 @@ script/source = "extends CharacterBody2D
 # Individual textures (optional, just for clarity)
 var skin_tai: Texture2D = preload(\"res://textures/Tai/tai_16x16.png\")
 var skin_matt: Texture2D = preload(\"res://textures/Matt/matt_16x16.png\")
+var skin_teto: Texture2D = preload(\"res://textures/Teto/Teto_16x16.png\")
 
 # List of all available skins (order = cycle order)
 var skins: Array[Texture2D] = []
@@ -28,6 +29,7 @@ func _ready():
 	skins = [
 		skin_tai,
 		skin_matt,
+		skin_teto,
 	]
 	apply_skin_index(0)  # start with first skin
 	animation_player.stop()
