@@ -1,106 +1,99 @@
 extends CharacterBody2D
 
-@export var walk_speed: float = 100.0
-@export var run_speed: float = 180.0
+@export var walk_speed: float = 70.0
+@export var run_speed: float = 120.0
+@export var acceleration: float = 800.0
+@export var friction: float = 800.0
+@export var input_deadzone: float = 0.2
+
+# On récupère directement le node AnimationPlayer dans la scène
+@onready var anim_player: AnimationPlayer = $characterSprite/characterSpriteAnimationPlayer
 
 var _input_dir: Vector2 = Vector2.ZERO
 var _is_running: bool = false
-var _last_facing: Vector2 = Vector2.DOWN  # default facing down
+var _last_facing: Vector2 = Vector2.DOWN
 
-@onready var anim: AnimatedSprite2D = $AnimatedSprite2D
-@onready var hitbox_area: Area2D = $Area2D
-@onready var hitbox_shape: CollisionShape2D = $Area2D/Hitbox
 
 func _ready() -> void:
-	# --- Physics layers/masks (example) ---
-	# Player body: layer 2, collides only with world (layer 1)
-	collision_layer = 1 << 1
-	collision_mask  = 1 << 0
+	# Juste pour vérifier que le chemin est bon
+	if anim_player == null:
+		push_error("Player: impossible de trouver $characterSprite/characterSpriteAnimationPlayer")
 
-	# Hitbox: layer 4, no mask yet (doesn't hit anything until you decide)
-	hitbox_area.collision_layer = 1 << 3
-	hitbox_area.collision_mask  = 0
-	# If later you add NPC/monster hurtboxes, you can set:
-	# hitbox_area.collision_mask = 1 << 4
-
-	_update_hitbox_offset()  # put hitbox in front of starting facing dir
+	# Layers de collision (optionnel suivant ton projet)
+	collision_layer = 1 << 1   # ex: layer 2
+	collision_mask  = 1 << 0   # ex: collide avec layer 1 (décor)
 
 
 func _physics_process(delta: float) -> void:
 	_read_input()
 	_move_player(delta)
 	_update_animation()
-	_update_hitbox_offset()
 
+
+# ---------------- Input ----------------
 
 func _read_input() -> void:
-	var x := Input.get_action_strength("move_right") - Input.get_action_strength("move_left")
-	var y := Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
+	var dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 
-	_input_dir = Vector2.ZERO
+	# Deadzone
+	if dir.length() < input_deadzone:
+		dir = Vector2.ZERO
 
-	# Prioritize the axis with the stronger input (no diagonal)
-	if abs(x) > abs(y):
-		_input_dir.x = sign(x)
-	elif abs(y) > 0:
-		_input_dir.y = sign(y)
+	# Forcer 4 directions (pas de diagonales)
+	if dir != Vector2.ZERO:
+		if abs(dir.x) > abs(dir.y):
+			dir.y = 0.0
+			dir.x = sign(dir.x)
+		else:
+			dir.x = 0.0
+			dir.y = sign(dir.y)
 
-	if _input_dir.length() > 0:
-		_last_facing = _input_dir  # remember last non-zero direction
+	_input_dir = dir
+
+	if _input_dir != Vector2.ZERO:
+		_last_facing = _input_dir
 
 	_is_running = Input.is_action_pressed("run")
 
 
-func _move_player(_delta: float) -> void:
-	if _input_dir == Vector2.ZERO:
-		velocity = Vector2.ZERO
-	else:
+# ---------------- Déplacement ----------------
+
+func _move_player(delta: float) -> void:
+	var target_velocity := Vector2.ZERO
+
+	if _input_dir != Vector2.ZERO:
 		var speed := run_speed if _is_running else walk_speed
-		velocity = _input_dir * speed
+		target_velocity = _input_dir * speed
+
+	if target_velocity == Vector2.ZERO:
+		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
+	else:
+		velocity = velocity.move_toward(target_velocity, acceleration * delta)
 
 	move_and_slide()
 
 
+# ---------------- Animation ----------------
+
 func _update_animation() -> void:
+	if anim_player == null:
+		return
+
 	var dir_name := _direction_to_string(_last_facing)
 
 	if _input_dir == Vector2.ZERO:
-		# Idle
-		var idle_anim := "idle_" + dir_name
-		if anim.animation != idle_anim:
-			anim.play(idle_anim)
+		var anim_name := "idle_" + dir_name
+		if anim_player.current_animation != anim_name:
+			anim_player.play(anim_name)
 	else:
-		# Moving: walk or run
 		var base := "run_" if _is_running else "walk_"
-		var move_anim := base + dir_name
-		if anim.animation != move_anim:
-			anim.play(move_anim)
+		var anim_name := base + dir_name
+		if anim_player.current_animation != anim_name:
+			anim_player.play(anim_name)
 
 
 func _direction_to_string(dir: Vector2) -> String:
-	# Decide whether to prioritize horizontal or vertical
 	if abs(dir.x) > abs(dir.y):
-		# Left or right
 		return "right" if dir.x > 0.0 else "left"
 	else:
-		# Up or down
 		return "down" if dir.y > 0.0 else "up"
-
-
-func _update_hitbox_offset() -> void:
-	# Move the Area2D in front of the player based on facing direction
-	var offset_dist := 8.0  # tweak for how far in front the hitbox is
-	var offset := Vector2.ZERO
-	var dir_name := _direction_to_string(_last_facing)
-
-	match dir_name:
-		"up":
-			offset = Vector2(0, -offset_dist)
-		"down":
-			offset = Vector2(0, offset_dist)
-		"left":
-			offset = Vector2(-offset_dist, 0)
-		"right":
-			offset = Vector2(offset_dist, 0)
-
-	hitbox_area.position = offset

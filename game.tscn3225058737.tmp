@@ -12,7 +12,6 @@
 y_sort_enabled = true
 
 [node name="Player" parent="YSort" instance=ExtResource("1_e2o6t")]
-position = Vector2(32, 40)
+position = Vector2(24, 8)
 
 [node name="Companion" parent="YSort" instance=ExtResource("2_feb5d")]
-position = Vector2(72, 40)
