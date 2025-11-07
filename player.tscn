@@ -1,0 +1,235 @@
+[gd_scene load_steps=14 format=3 uid="uid://bpq6s4m0iksd8"]
+
+[ext_resource type="Texture2D" uid="uid://cypn8vg1l271j" path="res://textures/Tai/tai_16x16.png" id="2_ghijl"]
+[ext_resource type="Script" uid="uid://cqx5ai0w8rnjg" path="res://camera_2d.gd" id="3_ghijl"]
+
+[sub_resource type="GDScript" id="GDScript_ij6vw"]
+script/source = "extends CharacterBody2D
+
+# Animation Player child node
+@onready var animation_player = self.get_node(\"AnimationPlayer/SpriteAnimationPlayer\")
+@onready var sprite: Sprite2D = $AnimationPlayer
+
+# Individual textures (optional, just for clarity)
+var skin_tai: Texture2D = preload(\"res://textures/Tai/tai_16x16.png\")
+var skin_matt: Texture2D = preload(\"res://textures/Matt/matt_16x16.png\")
+
+# List of all available skins (order = cycle order)
+var skins: Array[Texture2D] = []
+var current_skin_index: int = 0
+# Properties
+@export var speed = 250.0
+var face_direction = \"Front\"
+var animation_to_play = \"Front_Idle\"
+
+# Start front idle animation on load
+func _ready():
+	# fill the skin list once (add more here if you create more skins)
+	skins = [
+		skin_tai,
+		skin_matt,
+	]
+	apply_skin_index(0)  # start with first skin
+	animation_player.stop()
+	animation_player.play(\"Front_Idle\")
+
+func _physics_process(_delta):
+	
+	# Swap skin when button pressed once
+	if Input.is_action_just_pressed(\"swap_skin\"):
+		var next_index := (current_skin_index + 1) % skins.size()
+		apply_skin_index(next_index)
+		
+	# Reset velocity
+	velocity = Vector2.ZERO
+	# Add appropriate velocities depending on button press
+	if Input.is_action_pressed(\"ui_left\"):
+		velocity.x -= 1.0 * speed
+		# Only face left/right if not diagonal movement
+		if velocity.y == 0.0:
+			face_direction = \"Left\"
+	if Input.is_action_pressed(\"ui_right\"):
+		velocity.x += 1.0 * speed
+		# Only face left/right if not diagonal movement
+		if velocity.y == 0.0:
+			face_direction = \"Right\"
+	if Input.is_action_pressed(\"ui_up\"):
+		velocity.y -= 1.0 * speed
+		face_direction = \"Back\"
+	if Input.is_action_pressed(\"ui_down\"):
+		velocity.y += 1.0 * speed
+		face_direction = \"Front\"
+		
+	# All movement animations named appropriately, eg \"Left_Idle\" or \"Back_Walk\"
+	animation_to_play = face_direction + \"_\" + (\"Walk\" if velocity.length() > 0.0 else \"Idle\")
+	animation_player.play(animation_to_play)
+	
+	# Move character, slide at collision
+	move_and_slide()
+
+func apply_skin_index(index: int) -> void:
+	if skins.is_empty():
+		return
+	
+	current_skin_index = index
+	sprite.texture = skins[current_skin_index]
+"
+
+[sub_resource type="Animation" id="Animation_4sjlk"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 5), Vector2i(1, 5), Vector2i(2, 5), Vector2i(3, 5)]
+}
+
+[sub_resource type="Animation" id="Animation_ghijl"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1), Vector2i(3, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_lhvu3"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 4), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4)]
+}
+
+[sub_resource type="Animation" id="Animation_ij6vw"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0), Vector2i(3, 0)]
+}
+
+[sub_resource type="Animation" id="Animation_6ct3r"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 7), Vector2i(1, 7), Vector2i(2, 7), Vector2i(3, 7)]
+}
+
+[sub_resource type="Animation" id="Animation_dd465"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 3), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3)]
+}
+
+[sub_resource type="Animation" id="Animation_qp52p"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 6), Vector2i(1, 6), Vector2i(2, 6), Vector2i(3, 6)]
+}
+
+[sub_resource type="Animation" id="Animation_44cfe"]
+loop_mode = 1
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:frame_coords")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 0.25, 0.5, 0.75),
+"transitions": PackedFloat32Array(1, 1, 1, 1),
+"update": 1,
+"values": [Vector2i(0, 2), Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_1kp85"]
+_data = {
+&"Back_Idle": SubResource("Animation_4sjlk"),
+&"Back_Walk": SubResource("Animation_ghijl"),
+&"Front_Idle": SubResource("Animation_lhvu3"),
+&"Front_Walk": SubResource("Animation_ij6vw"),
+&"Left_Idle": SubResource("Animation_6ct3r"),
+&"Left_Walk": SubResource("Animation_dd465"),
+&"Right_Idle": SubResource("Animation_qp52p"),
+&"Right_Walk": SubResource("Animation_44cfe")
+}
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ghijl"]
+radius = 1.0
+height = 10.0
+
+[node name="Player" type="CharacterBody2D"]
+script = SubResource("GDScript_ij6vw")
+
+[node name="AnimationPlayer" type="Sprite2D" parent="."]
+texture = ExtResource("2_ghijl")
+hframes = 4
+vframes = 8
+frame = 12
+
+[node name="SpriteAnimationPlayer" type="AnimationPlayer" parent="AnimationPlayer"]
+libraries = {
+&"": SubResource("AnimationLibrary_1kp85")
+}
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, 8)
+rotation = 1.5707964
+shape = SubResource("CapsuleShape2D_ghijl")
+disabled = true
+
+[node name="Camera2D" type="Camera2D" parent="."]
+script = ExtResource("3_ghijl")
