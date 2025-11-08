@@ -19,7 +19,7 @@ var skin_teto: Texture2D = preload(\"res://textures/Teto/Teto_16x16.png\")
 var skins: Array[Texture2D] = []
 var current_skin_index: int = 0
 # Properties
-@export var speed = 250.0
+@export var speed = 50.0
 var face_direction = \"Front\"
 var animation_to_play = \"Front_Idle\"
 
@@ -220,7 +220,7 @@ script = SubResource("GDScript_ij6vw")
 texture = ExtResource("2_ghijl")
 hframes = 4
 vframes = 8
-frame = 12
+frame = 20
 
 [node name="SpriteAnimationPlayer" type="AnimationPlayer" parent="AnimationPlayer"]
 libraries = {
