@@ -1,79 +1,90 @@
-[gd_scene load_steps=13 format=3 uid="uid://bpq6s4m0iksd8"]
+[gd_scene load_steps=16 format=3 uid="uid://bpq6s4m0iksd8"]
 
 [ext_resource type="Texture2D" uid="uid://cypn8vg1l271j" path="res://textures/Tai/tai_16x16.png" id="2_ghijl"]
+[ext_resource type="Texture2D" uid="uid://bbq11175iskqf" path="res://textures/Matt/matt_16x16.png" id="2_hqtel"]
 [ext_resource type="Script" uid="uid://cqx5ai0w8rnjg" path="res://camera_2d.gd" id="3_ghijl"]
+[ext_resource type="Texture2D" uid="uid://bh46vwg3li21c" path="res://textures/Teto/Teto_16x16.png" id="3_sweqy"]
 
 [sub_resource type="GDScript" id="GDScript_ij6vw"]
 script/source = "extends CharacterBody2D
+class_name PlayerCharacter
 
-# Animation Player child node
-@onready var animation_player = self.get_node(\"AnimationPlayer/SpriteAnimationPlayer\")
+@export var speed: float = 50.0
+@export var block_diagonals: bool = true
+@export var sprite_scale: float = 1.0
+@export var digimon_group: StringName = \"Digimon\" # all your Pet/Enemy digimon are in this group
+
+@export var skins: Array[Texture2D] = []
+
+@onready var animation_player: AnimationPlayer = $AnimationPlayer/SpriteAnimationPlayer
 @onready var sprite: Sprite2D = $AnimationPlayer
 
-# Individual textures (optional, just for clarity)
-var skin_tai: Texture2D = preload(\"res://textures/Tai/tai_16x16.png\")
-var skin_matt: Texture2D = preload(\"res://textures/Matt/matt_16x16.png\")
-var skin_teto: Texture2D = preload(\"res://textures/Teto/Teto_16x16.png\")
-
-# List of all available skins (order = cycle order)
-var skins: Array[Texture2D] = []
 var current_skin_index: int = 0
-# Properties
-@export var speed = 50.0
-var face_direction = \"Front\"
-var animation_to_play = \"Front_Idle\"
+var face_direction: String = \"Front\"
+var animation_to_play: String = \"Front_Idle\"
 
-# Start front idle animation on load
-func _ready():
-	# fill the skin list once (add more here if you create more skins)
-	skins = [
-		skin_tai,
-		skin_matt,
-		skin_teto,
-	]
-	apply_skin_index(0)  # start with first skin
+func _ready() -> void:
+	# Apply sprite scale
+	sprite.scale = Vector2.ONE * sprite_scale
+
+	if skins.is_empty():
+		push_warning(\"PlayerCharacter: 'skins' array is empty – assign some textures in the Inspector.\")
+	else:
+		_apply_skin_index(0)
+
 	animation_player.stop()
 	animation_player.play(\"Front_Idle\")
 
-func _physics_process(_delta):
-	
-	# Swap skin when button pressed once
-	if Input.is_action_just_pressed(\"swap_skin\"):
+	# --- prevent collision with Digimon ---
+	_ignore_digimon_collisions()
+
+
+func _ignore_digimon_collisions() -> void:
+	# Delay by one frame to ensure Digimon are ready
+	await get_tree().process_frame
+	for digimon in get_tree().get_nodes_in_group(digimon_group):
+		if digimon is CharacterBody2D:
+			add_collision_exception_with(digimon)
+			digimon.add_collision_exception_with(self)
+
+
+func _physics_process(_delta: float) -> void:
+	if Input.is_action_just_pressed(\"swap_skin\") and skins.size() > 0:
 		var next_index := (current_skin_index + 1) % skins.size()
-		apply_skin_index(next_index)
-		
-	# Reset velocity
-	velocity = Vector2.ZERO
-	# Add appropriate velocities depending on button press
-	if Input.is_action_pressed(\"ui_left\"):
-		velocity.x -= 1.0 * speed
-		# Only face left/right if not diagonal movement
-		if velocity.y == 0.0:
-			face_direction = \"Left\"
-	if Input.is_action_pressed(\"ui_right\"):
-		velocity.x += 1.0 * speed
-		# Only face left/right if not diagonal movement
-		if velocity.y == 0.0:
-			face_direction = \"Right\"
-	if Input.is_action_pressed(\"ui_up\"):
-		velocity.y -= 1.0 * speed
+		_apply_skin_index(next_index)
+
+	var input_vector := Vector2.ZERO
+	input_vector.x = Input.get_action_strength(\"ui_right\") - Input.get_action_strength(\"ui_left\")
+	input_vector.y = Input.get_action_strength(\"ui_down\") - Input.get_action_strength(\"ui_up\")
+
+	if block_diagonals and input_vector.x != 0.0 and input_vector.y != 0.0:
+		if abs(input_vector.y) >= abs(input_vector.x):
+			input_vector.x = 0.0
+		else:
+			input_vector.y = 0.0
+
+	velocity = input_vector * speed
+
+	if velocity.x < 0.0:
+		face_direction = \"Left\"
+	elif velocity.x > 0.0:
+		face_direction = \"Right\"
+	elif velocity.y < 0.0:
 		face_direction = \"Back\"
-	if Input.is_action_pressed(\"ui_down\"):
-		velocity.y += 1.0 * speed
+	elif velocity.y > 0.0:
 		face_direction = \"Front\"
-		
-	# All movement animations named appropriately, eg \"Left_Idle\" or \"Back_Walk\"
+
 	animation_to_play = face_direction + \"_\" + (\"Walk\" if velocity.length() > 0.0 else \"Idle\")
-	animation_player.play(animation_to_play)
-	
-	# Move character, slide at collision
+	if not animation_player.is_playing() or animation_player.current_animation != animation_to_play:
+		animation_player.play(animation_to_play)
+
 	move_and_slide()
 
-func apply_skin_index(index: int) -> void:
+
+func _apply_skin_index(index: int) -> void:
 	if skins.is_empty():
 		return
-	
-	current_skin_index = index
+	current_skin_index = clamp(index, 0, skins.size() - 1)
 	sprite.texture = skins[current_skin_index]
 "
 
@@ -209,8 +220,13 @@ _data = {
 &"Right_Walk": SubResource("Animation_44cfe")
 }
 
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_onrkg"]
+radius = 1.0
+height = 10.0
+
 [node name="Player" type="CharacterBody2D"]
 script = SubResource("GDScript_ij6vw")
+skins = Array[Texture2D]([ExtResource("2_ghijl"), ExtResource("2_hqtel"), ExtResource("3_sweqy")])
 
 [node name="AnimationPlayer" type="Sprite2D" parent="."]
 texture = ExtResource("2_ghijl")
@@ -225,3 +241,8 @@ libraries = {
 
 [node name="Camera2D" type="Camera2D" parent="."]
 script = ExtResource("3_ghijl")
+
+[node name="PlayerCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 8)
+rotation = 1.5707964
+shape = SubResource("CapsuleShape2D_onrkg")

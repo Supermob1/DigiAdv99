@@ -1,9 +1,11 @@
-[gd_scene load_steps=14 format=4 uid="uid://d1ltns4pdy41x"]
+[gd_scene load_steps=15 format=4 uid="uid://d1ltns4pdy41x"]
 
 [ext_resource type="Texture2D" uid="uid://dwtkocw3mts7h" path="res://textures/tilesets/1.png" id="1_aqk2v"]
 [ext_resource type="PackedScene" uid="uid://bpq6s4m0iksd8" path="res://player.tscn" id="2_tlwt5"]
-[ext_resource type="PackedScene" uid="uid://b1mwon7tmweyl" path="res://digimon.tscn" id="3_aqk2v"]
+[ext_resource type="PackedScene" uid="uid://ctqvi6j6qsjc5" path="res://simple_digimon.tscn" id="3_dwbse"]
+[ext_resource type="Script" uid="uid://5tralam00mis" path="res://enemy_digimon.gd" id="4_036b0"]
 [ext_resource type="Texture2D" uid="uid://spw7x568qbq5" path="res://textures/tilesets/3.png" id="4_aqk2v"]
+[ext_resource type="Script" uid="uid://1krvx8vrloii" path="res://digimon.gd" id="4_pkg7o"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dwbse"]
 texture = ExtResource("1_aqk2v")
@@ -2427,10 +2429,6 @@ terrain_set_0/terrain_1/name = "Water"
 terrain_set_0/terrain_1/color = Color(0.19586846, 0.34728548, 1, 1)
 sources/0 = SubResource("TileSetAtlasSource_tlwt5")
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_tlwt5"]
-radius = 1.0
-height = 10.0
-
 [sub_resource type="SegmentShape2D" id="SegmentShape2D_aqk2v"]
 a = Vector2(192, 64)
 b = Vector2(-16, 64)
@@ -2601,18 +2599,26 @@ y_sort_enabled = true
 [node name="Player" parent="Node2D" instance=ExtResource("2_tlwt5")]
 position = Vector2(40, 32)
 
-[node name="PlayerCollision" type="CollisionShape2D" parent="Node2D/Player"]
-position = Vector2(0, 8)
-rotation = 1.5707964
-shape = SubResource("CapsuleShape2D_tlwt5")
-
-[node name="Digimon" parent="Node2D" instance=ExtResource("3_aqk2v")]
-position = Vector2(24, 32)
-
-[node name="DigimonCollision" type="CollisionShape2D" parent="Node2D/Digimon"]
-position = Vector2(0, 8)
-rotation = 1.5707964
-shape = SubResource("CapsuleShape2D_tlwt5")
+[node name="PetDigimon" parent="Node2D" node_paths=PackedStringArray("player") groups=["Digimon"] instance=ExtResource("3_dwbse")]
+position = Vector2(8, 48)
+script = ExtResource("4_pkg7o")
+player = NodePath("../Player")
+enemy_group = &"WildDigimon"
+base_max_health = 1000
+base_attack_damage = 1
+energy = 0
+bond = 50
+strength = 0
+egg_duration = 5.0
+wander_radius = 32.0
+wander_change_interval = 1.5
+engage_distance = 100.0
+combat_max_chase_distance = 160.0
+egg_scale = 0.6
+egg_idle_fps = 2.0
+egg_offset = Vector2(20, 0)
+max_health = 1000
+level = 100
 
 [node name="StaticBody2D" type="StaticBody2D" parent="Node2D"]
 disable_mode = 2
@@ -2623,10 +2629,47 @@ shape = SubResource("SegmentShape2D_aqk2v")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Node2D/StaticBody2D"]
 shape = SubResource("SegmentShape2D_tlwt5")
 
-[node name="TileMapLayer2" type="TileMapLayer" parent="Node2D"]
-tile_map_data = PackedByteArray("AAAAAP3/AAAKAAAAAAAAAP7/AAAKAAEAAAAAAP//AAAKAAIAAAAAAAAAAAAKAAMAAAABAP3/AAALAAAAAAABAP7/AAALAAEAAAABAP//AAALAAIAAAABAAAAAAALAAMAAAACAP3/AAAKAAAAAAACAP7/AAAKAAEAAAACAP//AAAKAAIAAAACAAAAAAAKAAMAAAADAP3/AAALAAAAAAADAP7/AAALAAEAAAADAP//AAALAAIAAAADAAAAAAALAAMAAAAEAP3/AAAKAAAAAAAEAP7/AAAKAAEAAAAEAP//AAAKAAIAAAAEAAAAAAAKAAMAAAAFAP3/AAALAAAAAAAFAP7/AAALAAEAAAAFAP//AAALAAIAAAAFAAAAAAALAAMAAAAGAP3/AAAKAAAAAAAGAP7/AAAKAAEAAAAGAP//AAAKAAIAAAAGAAAAAAAKAAMAAAAHAP3/AAALAAAAAAAHAP7/AAALAAEAAAAHAP//AAALAAIAAAAHAAAAAAALAAMAAAAIAP3/AAAKAAAAAAAIAP7/AAAKAAEAAAAIAP//AAAKAAIAAAAIAAAAAAAKAAMAAAAJAP3/AAALAAAAAAAJAP7/AAALAAEAAAAJAP//AAALAAIAAAAJAAAAAAALAAMAAAAKAP3/AAAKAAAAAAAKAP7/AAAKAAEAAAAKAP//AAAKAAIAAAAKAAAAAAAKAAMAAAALAP3/AAALAAAAAAALAP7/AAALAAEAAAALAP//AAALAAIAAAALAAAAAAALAAMAAAAMAP3/AAAKAAAAAAAMAP7/AAAKAAEAAAAMAP//AAAKAAIAAAAMAAAAAAAKAAMAAAANAP3/AAALAAAAAAANAP7/AAALAAEAAAANAP//AAALAAIAAAANAAAAAAALAAMAAAD+//3/AAAKAAAAAAD+//7/AAAKAAEAAAD+////AAAKAAIAAAD+/wAAAAAKAAMAAAD///3/AAALAAAAAAD///7/AAALAAEAAAD/////AAALAAIAAAD//wAAAAALAAMAAAA=")
-tile_set = SubResource("TileSet_dwbse")
+[node name="EnemyDigimon_1" parent="Node2D" node_paths=PackedStringArray("target") groups=["Digimon", "WildDigimon"] instance=ExtResource("3_dwbse")]
+position = Vector2(296, 96)
+script = ExtResource("4_036b0")
+target = NodePath("../PetDigimon")
+zone_radius = 80.0
+return_speed = 30.0
+stop_distance = 18.0
+auto_digivolve = true
+digivolve_hp_threshold = 0.4
+digivolve_min_level = 5
+digivolve_conditions = Array[StringName]([])
+level = 100
 
-[node name="TileMapLayer" type="TileMapLayer" parent="Node2D"]
+[node name="EnemyDigimon_2" parent="Node2D" node_paths=PackedStringArray("target") groups=["Digimon", "WildDigimon"] instance=ExtResource("3_dwbse")]
+position = Vector2(280, 8)
+script = ExtResource("4_036b0")
+target = NodePath("../PetDigimon")
+zone_radius = 80.0
+return_speed = 30.0
+stop_distance = 18.0
+auto_digivolve = true
+digivolve_hp_threshold = 0.4
+digivolve_min_level = 5
+digivolve_conditions = Array[StringName]([])
+digimon_name = "Agumon"
+
+[node name="EnemyDigimon_3" parent="Node2D" node_paths=PackedStringArray("target") groups=["Digimon", "WildDigimon"] instance=ExtResource("3_dwbse")]
+position = Vector2(360, 48)
+script = ExtResource("4_036b0")
+target = NodePath("../PetDigimon")
+zone_radius = 80.0
+return_speed = 30.0
+stop_distance = 18.0
+auto_digivolve = true
+digivolve_hp_threshold = 0.4
+digivolve_min_level = 5
+digivolve_conditions = Array[StringName]([])
+digimon_name = "Graymon"
+attack_damage = 10
+
+[node name="Trees" type="TileMapLayer" parent="Node2D"]
+z_index = -3
 tile_map_data = PackedByteArray("AAD///7/AAAKAAAAAAD/////AAAKAAEAAAD//wAAAAAKAAIAAAD//wEAAAAKAAMAAAAAAP7/AAALAAAAAAAAAP//AAALAAEAAAAAAAAAAAALAAIAAAAAAAEAAAALAAMAAAABAP7/AAAKAAAAAAABAP//AAAKAAEAAAABAAAAAAAKAAIAAAABAAEAAAAKAAMAAAACAP7/AAALAAAAAAACAP//AAALAAEAAAACAAAAAAALAAIAAAACAAEAAAALAAMAAAADAP7/AAAKAAAAAAADAP//AAAKAAEAAAADAAAAAAAKAAIAAAADAAEAAAAKAAMAAAAEAP7/AAALAAAAAAAEAP//AAALAAEAAAAEAAAAAAALAAIAAAAEAAEAAAALAAMAAAAFAP7/AAAKAAAAAAAFAP//AAAKAAEAAAAFAAAAAAAKAAIAAAAFAAEAAAAKAAMAAAAGAP7/AAALAAAAAAAGAP//AAALAAEAAAAGAAAAAAALAAIAAAAGAAEAAAALAAMAAAAHAP7/AAAKAAAAAAAHAP//AAAKAAEAAAAHAAAAAAAKAAIAAAAHAAEAAAAKAAMAAAAIAP7/AAALAAAAAAAIAP//AAALAAEAAAAIAAAAAAALAAIAAAAIAAEAAAALAAMAAAAJAP7/AAAKAAAAAAAJAP//AAAKAAEAAAAJAAAAAAAKAAIAAAAJAAEAAAAKAAMAAAAKAP7/AAALAAAAAAAKAP//AAALAAEAAAAKAAAAAAALAAIAAAAKAAEAAAALAAMAAAALAP7/AAAKAAAAAAALAP//AAAKAAEAAAALAAAAAAAKAAIAAAALAAEAAAAKAAMAAAAMAP7/AAALAAAAAAAMAP//AAALAAEAAAAMAAAAAAALAAIAAAAMAAEAAAALAAMAAAA=")
 tile_set = SubResource("TileSet_dwbse")

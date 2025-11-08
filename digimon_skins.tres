@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="DigimonSkinSet" load_steps=12 format=3 uid="uid://bpmdnxukvw72e"]
+
+[ext_resource type="Script" uid="uid://2vw7er56io4x" path="res://resource_preloader.gd" id="1_81j4i"]
+[ext_resource type="Texture2D" uid="uid://dutsmut1lu83g" path="res://textures/Koromon/koromon_attack.png" id="1_s2hpd"]
+[ext_resource type="Texture2D" uid="uid://bmnj6vypmtrnh" path="res://textures/Koromon/koromon_16x16_alt.png" id="2_m7u7m"]
+[ext_resource type="Texture2D" uid="uid://dddkwf6v4g5s8" path="res://textures/Agumon/Agumon_attack.png" id="2_x7nj4"]
+[ext_resource type="Texture2D" uid="uid://cqx2vm6xbm6np" path="res://textures/Agumon/Agumon.png" id="3_cky6h"]
+[ext_resource type="Texture2D" uid="uid://7vss1phe6adj" path="res://textures/Graymon/Graymon_attack.png" id="3_j2q3y"]
+[ext_resource type="Texture2D" uid="uid://ky07pjf4t80y" path="res://textures/Graymon/Graymon_16x16.png" id="4_2ige2"]
+[ext_resource type="Texture2D" uid="uid://pjixgjoxmme6" path="res://textures/MetalGraymon/MetalGraymon_attack.png" id="4_lsnff"]
+[ext_resource type="Texture2D" uid="uid://cixcuu3jhx2vl" path="res://textures/WarGraymon/wargraymon_attack.png" id="5_dfmpf"]
+[ext_resource type="Texture2D" uid="uid://d0vgrlf1bepbb" path="res://textures/MetalGraymon/MetalGraymon_16x16.png" id="5_lhg7g"]
+[ext_resource type="Texture2D" uid="uid://cw2vlvqd01bgq" path="res://textures/WarGraymon/WarGraymon.png" id="6_c37u8"]
+
+[resource]
+script = ExtResource("1_81j4i")
+skins = Array[Texture2D]([ExtResource("2_m7u7m"), ExtResource("3_cky6h"), ExtResource("4_2ige2"), ExtResource("5_lhg7g"), ExtResource("6_c37u8")])
+attack_skins = Array[Texture2D]([ExtResource("1_s2hpd"), ExtResource("2_x7nj4"), ExtResource("3_j2q3y"), ExtResource("4_lsnff"), ExtResource("5_dfmpf")])
+metadata/_custom_type_script = "uid://2vw7er56io4x"

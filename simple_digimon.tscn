@@ -1,0 +1,43 @@
+[gd_scene load_steps=7 format=3 uid="uid://ctqvi6j6qsjc5"]
+
+[ext_resource type="Script" uid="uid://med0dyhqj27h" path="res://GenericDigimon.gd" id="1_rdrmj"]
+[ext_resource type="Texture2D" uid="uid://dfco62v0oxcrh" path="res://textures/health_bar_bg.png" id="2_jhuq6"]
+[ext_resource type="Texture2D" uid="uid://0w68n72m5via" path="res://textures/health_bar_fill.png" id="3_k653f"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_rdrmj"]
+radius = 1.0
+height = 10.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8lss1"]
+size = Vector2(16, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jhuq6"]
+
+[node name="Digimon" type="CharacterBody2D"]
+script = ExtResource("1_rdrmj")
+
+[node name="Sprite" type="Sprite2D" parent="."]
+
+[node name="DigimonCollision" type="CollisionShape2D" parent="."]
+position = Vector2(0, 8)
+rotation = 1.5707964
+shape = SubResource("CapsuleShape2D_rdrmj")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+
+[node name="HurtShape" type="CollisionShape2D" parent="Hurtbox"]
+shape = SubResource("RectangleShape2D_8lss1")
+debug_color = Color(0.93533546, 0.2558148, 1.92523e-07, 0.41960785)
+
+[node name="Hitbox" type="Area2D" parent="."]
+
+[node name="HitShape" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("RectangleShape2D_jhuq6")
+
+[node name="HealthBar" type="TextureProgressBar" parent="."]
+offset_left = -8.0
+offset_top = -16.0
+offset_right = 8.0
+offset_bottom = -8.0
+texture_under = ExtResource("2_jhuq6")
+texture_progress = ExtResource("3_k653f")
