@@ -1,0 +1,14 @@
+[gd_scene load_steps=3 format=3 uid="uid://bhp1kakrbpvid"]
+
+[ext_resource type="PackedScene" uid="uid://ctqvi6j6qsjc5" path="res://simple_digimon.tscn" id="1_objrk"]
+[ext_resource type="Script" uid="uid://5tralam00mis" path="res://enemy_digimon.gd" id="2_toyg0"]
+
+[node name="EnemyDigimon" instance=ExtResource("1_objrk")]
+script = ExtResource("2_toyg0")
+zone_radius = 80.0
+return_speed = 30.0
+stop_distance = 18.0
+auto_digivolve = true
+digivolve_hp_threshold = 0.4
+digivolve_min_level = 5
+digivolve_conditions = Array[StringName]([])

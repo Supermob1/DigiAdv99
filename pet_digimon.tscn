@@ -1,0 +1,21 @@
+[gd_scene load_steps=3 format=3 uid="uid://sd5u4df50wwl"]
+
+[ext_resource type="PackedScene" uid="uid://ctqvi6j6qsjc5" path="res://simple_digimon.tscn" id="1_4umun"]
+[ext_resource type="Script" uid="uid://1krvx8vrloii" path="res://digimon.gd" id="2_axe34"]
+
+[node name="PetDigimon" instance=ExtResource("1_4umun")]
+script = ExtResource("2_axe34")
+enemy_group = &"WildDigimon"
+base_max_health = 10
+base_attack_damage = 1
+energy = 0
+bond = 0
+strength = 0
+egg_duration = 5.0
+wander_radius = 32.0
+wander_change_interval = 1.5
+engage_distance = 100.0
+combat_max_chase_distance = 160.0
+egg_scale = 0.6
+egg_idle_fps = 2.0
+egg_offset = Vector2(20, 0)
