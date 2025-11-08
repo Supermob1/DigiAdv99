@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://bpq6s4m0iksd8"]
+[gd_scene load_steps=13 format=3 uid="uid://bpq6s4m0iksd8"]
 
 [ext_resource type="Texture2D" uid="uid://cypn8vg1l271j" path="res://textures/Tai/tai_16x16.png" id="2_ghijl"]
 [ext_resource type="Script" uid="uid://cqx5ai0w8rnjg" path="res://camera_2d.gd" id="3_ghijl"]
@@ -209,10 +209,6 @@ _data = {
 &"Right_Walk": SubResource("Animation_44cfe")
 }
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ghijl"]
-radius = 1.0
-height = 10.0
-
 [node name="Player" type="CharacterBody2D"]
 script = SubResource("GDScript_ij6vw")
 
@@ -226,12 +222,6 @@ frame = 20
 libraries = {
 &"": SubResource("AnimationLibrary_1kp85")
 }
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 8)
-rotation = 1.5707964
-shape = SubResource("CapsuleShape2D_ghijl")
-disabled = true
 
 [node name="Camera2D" type="Camera2D" parent="."]
 script = ExtResource("3_ghijl")
