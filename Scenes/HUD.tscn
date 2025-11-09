@@ -1,8 +1,14 @@
-[gd_scene load_steps=4 format=3 uid="uid://b1y77bdfleuts"]
+[gd_scene load_steps=10 format=3 uid="uid://b1y77bdfleuts"]
 
 [ext_resource type="Texture2D" uid="uid://dxa8j61ich0ph" path="res://textures/UI/UI_health_bar_bg.png" id="1_on50t"]
 [ext_resource type="Script" uid="uid://bi8r35wmk0wx3" path="res://Scenes/hud.gd" id="1_prn5u"]
+[ext_resource type="FontFile" uid="uid://d1wygwllcbr3p" path="res://fonts/pixel_digivolve.ttf" id="2_b5b84"]
 [ext_resource type="Texture2D" uid="uid://dl0jf2ortj36d" path="res://textures/UI/UI_health_bar_fill.png" id="2_prn5u"]
+[ext_resource type="Texture2D" uid="uid://ckescbybwl3uv" path="res://textures/UI/UI_Vertical_bar_bg.png" id="5_fbb48"]
+[ext_resource type="Texture2D" uid="uid://be3wifvfhilcw" path="res://textures/UI/UI_Strength_bar_fill.png" id="6_o2vyp"]
+[ext_resource type="Texture2D" uid="uid://bvmmivmg6vrmi" path="res://textures/UI/UI_Energy_bar_fill.png" id="7_hhtw7"]
+[ext_resource type="Texture2D" uid="uid://b6xwdslav57jv" path="res://textures/UI/UI_Bond_bar_fill.png" id="8_w5mne"]
+[ext_resource type="FontFile" uid="uid://bqdrw4v4psl4k" path="res://fonts/pixel_digivolve_Italic.ttf" id="9_xuldq"]
 
 [node name="HUD" type="CanvasLayer"]
 script = ExtResource("1_prn5u")
@@ -19,12 +25,16 @@ grow_vertical = 2
 layout_mode = 1
 offset_right = 40.0
 offset_bottom = 40.0
+scale = Vector2(2, 2)
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Root/PetPanel"]
 layout_mode = 2
 
 [node name="PetNameLabel" type="Label" parent="Root/PetPanel/VBoxContainer"]
 layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2_b5b84")
 text = "Koromon"
 
 [node name="PetHpBar" type="TextureProgressBar" parent="Root/PetPanel/VBoxContainer"]
@@ -32,42 +42,80 @@ layout_mode = 2
 texture_under = ExtResource("1_on50t")
 texture_progress = ExtResource("2_prn5u")
 
-[node name="StatsRow1" type="HBoxContainer" parent="Root/PetPanel/VBoxContainer"]
+[node name="STATSBars" type="VBoxContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -272.0
+offset_right = -91.0
+offset_bottom = 68.0
+grow_horizontal = 0
+scale = Vector2(1.5, 1.5)
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Root/STATSBars"]
 layout_mode = 2
 
-[node name="LevelLabel" type="Label" parent="Root/PetPanel/VBoxContainer/StatsRow1"]
+[node name="StrengthLabel" type="Label" parent="Root/STATSBars/HBoxContainer"]
 layout_mode = 2
-text = "Lv 1"
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2_b5b84")
+text = "STR"
+vertical_alignment = 1
 
-[node name="StrengthLabel" type="Label" parent="Root/PetPanel/VBoxContainer/StatsRow1"]
+[node name="StrengthBar" type="TextureProgressBar" parent="Root/STATSBars/HBoxContainer"]
 layout_mode = 2
-text = "50"
+texture_under = ExtResource("5_fbb48")
+texture_progress = ExtResource("6_o2vyp")
 
-[node name="EnergyLabel" type="Label" parent="Root/PetPanel/VBoxContainer/StatsRow1"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="Root/STATSBars"]
 layout_mode = 2
-text = "50"
 
-[node name="BondLabel" type="Label" parent="Root/PetPanel/VBoxContainer"]
+[node name="EnergyLabel" type="Label" parent="Root/STATSBars/HBoxContainer2"]
 layout_mode = 2
-text = "Bond: 0"
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2_b5b84")
+text = "ENG"
 
-[node name="DigivolveLabel" type="Label" parent="Root/PetPanel/VBoxContainer"]
+[node name="EnergyBar" type="TextureProgressBar" parent="Root/STATSBars/HBoxContainer2"]
 layout_mode = 2
-text = "Cannot Digivolve"
+texture_under = ExtResource("5_fbb48")
+texture_progress = ExtResource("7_hhtw7")
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Root/STATSBars"]
+layout_mode = 2
+
+[node name="BondLabel" type="Label" parent="Root/STATSBars/HBoxContainer3"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 5
+theme_override_fonts/font = ExtResource("2_b5b84")
+text = "BND"
+
+[node name="BondBar" type="TextureProgressBar" parent="Root/STATSBars/HBoxContainer3"]
+layout_mode = 2
+texture_under = ExtResource("5_fbb48")
+texture_progress = ExtResource("8_w5mne")
 
 [node name="DigivolvePrompt" type="Label" parent="Root"]
-visible = false
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
-offset_left = -92.0
-offset_top = -23.0
-offset_right = 92.0
+offset_left = -346.5
+offset_top = -65.0
+offset_right = 346.5
 grow_horizontal = 2
 grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 0, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 18.892157, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("9_xuldq")
+theme_override_font_sizes/font_size = 55
 text = "Press [E] to Digivolve"
 horizontal_alignment = 1
 vertical_alignment = 2

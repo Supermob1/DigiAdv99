@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://ctqvi6j6qsjc5"]
+[gd_scene load_steps=8 format=3 uid="uid://ctqvi6j6qsjc5"]
 
 [ext_resource type="Script" uid="uid://med0dyhqj27h" path="res://GenericDigimon.gd" id="1_rdrmj"]
 [ext_resource type="Texture2D" uid="uid://dfco62v0oxcrh" path="res://textures/health_bar_bg.png" id="2_jhuq6"]
+[ext_resource type="FontFile" uid="uid://d1wygwllcbr3p" path="res://fonts/pixel_digivolve.ttf" id="2_k653f"]
 [ext_resource type="Texture2D" uid="uid://0w68n72m5via" path="res://textures/health_bar_fill.png" id="3_k653f"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_rdrmj"]
@@ -33,6 +34,18 @@ debug_color = Color(0.93533546, 0.2558148, 1.92523e-07, 0.41960785)
 
 [node name="HitShape" type="CollisionShape2D" parent="Hitbox"]
 shape = SubResource("RectangleShape2D_jhuq6")
+
+[node name="NameLabel" type="Label" parent="."]
+offset_left = -14.0
+offset_right = 26.0
+offset_bottom = 23.0
+scale = Vector2(0.2, 0.2)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_k653f")
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+vertical_alignment = 1
+uppercase = true
 
 [node name="HealthBar" type="TextureProgressBar" parent="."]
 offset_left = -8.0

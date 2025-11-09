@@ -1,13 +1,15 @@
-[gd_scene load_steps=17 format=4 uid="uid://d1ltns4pdy41x"]
+[gd_scene load_steps=19 format=4 uid="uid://d1ltns4pdy41x"]
 
 [ext_resource type="Texture2D" uid="uid://dwtkocw3mts7h" path="res://textures/tilesets/1.png" id="1_aqk2v"]
 [ext_resource type="PackedScene" uid="uid://b1y77bdfleuts" path="res://Scenes/HUD.tscn" id="1_gbfbk"]
+[ext_resource type="Script" uid="uid://b75kswvoxkps2" path="res://Main.gd" id="1_ioo17"]
 [ext_resource type="PackedScene" uid="uid://bpq6s4m0iksd8" path="res://player.tscn" id="2_tlwt5"]
 [ext_resource type="PackedScene" uid="uid://ctqvi6j6qsjc5" path="res://simple_digimon.tscn" id="3_dwbse"]
 [ext_resource type="Texture2D" uid="uid://spw7x568qbq5" path="res://textures/tilesets/3.png" id="4_aqk2v"]
 [ext_resource type="Script" uid="uid://1krvx8vrloii" path="res://digimon.gd" id="4_pkg7o"]
 [ext_resource type="PackedScene" uid="uid://bhp1kakrbpvid" path="res://enemy_digimon.tscn" id="6_pkg7o"]
 [ext_resource type="PackedScene" uid="uid://bb6xfjrcgpv2s" path="res://Scenes/enemy_spawner.tscn" id="7_pkg7o"]
+[ext_resource type="PackedScene" uid="uid://bdkvela5v12pp" path="res://Scenes/PauseMenu.tscn" id="10_wse8f"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_dwbse"]
 texture = ExtResource("1_aqk2v")
@@ -2584,9 +2586,12 @@ texture = ExtResource("4_aqk2v")
 sources/0 = SubResource("TileSetAtlasSource_036b0")
 
 [node name="World" type="Node2D"]
+script = ExtResource("1_ioo17")
 
-[node name="HUD" parent="." instance=ExtResource("1_gbfbk")]
-pet_path = NodePath("../Node2D/PetDigimon")
+[node name="HUD" parent="." node_paths=PackedStringArray("pet") instance=ExtResource("1_gbfbk")]
+pet = NodePath("../Node2D/PetDigimon")
+
+[node name="PauseMenu" parent="HUD" instance=ExtResource("10_wse8f")]
 
 [node name="Ground" type="TileMapLayer" parent="."]
 z_index = -5
@@ -2609,11 +2614,14 @@ position = Vector2(8, 48)
 script = ExtResource("4_pkg7o")
 player = NodePath("../Player")
 enemy_group = &"WildDigimon"
-base_max_health = 1000
+base_max_health = 10
 base_attack_damage = 1
 energy = 0
-bond = 50
+bond = 0
 strength = 0
+xp_curve_base = 20
+xp_curve_growth = 8
+xp_curve_power = 1.4
 egg_duration = 5.0
 wander_radius = 32.0
 wander_change_interval = 1.5
@@ -2622,9 +2630,7 @@ combat_max_chase_distance = 160.0
 egg_scale = 0.6
 egg_idle_fps = 2.0
 egg_offset = Vector2(20, 0)
-digimon_name = "Pyocomon"
-max_health = 1000
-level = 100
+digimon_name = "Punimon"
 
 [node name="StaticBody2D" type="StaticBody2D" parent="Node2D"]
 disable_mode = 2
@@ -2639,6 +2645,7 @@ shape = SubResource("SegmentShape2D_tlwt5")
 position = Vector2(368, 56)
 digimon_name_pool = Array[StringName]([&"Koromon", &"Agumon"])
 spawn_points = Array[Vector2]([])
+respawn_delay = 16.0
 
 [node name="Marker2D" type="Marker2D" parent="Node2D/EnemySpawner"]
 position = Vector2(40, -21)
@@ -2662,8 +2669,4 @@ tile_set = SubResource("TileSet_dwbse")
 
 [node name="EnemyDigimon" parent="Node2D" groups=["Digimon", "WildDigimon"] instance=ExtResource("6_pkg7o")]
 position = Vector2(-144, 48)
-target_group = &"PetDigimon"
-engage_distance = 120.0
-wander_radius = 32.0
-wander_change_interval = 1.5
 digimon_name = "Kabuterimon"

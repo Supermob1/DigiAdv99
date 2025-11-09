@@ -51,5 +51,6 @@ metadata/_custom_type_script = "uid://dr40mh3ivyxc5"
 
 [resource]
 script = ExtResource("1_4rivy")
+line_id = &"NyokimonLine"
 steps = Array[ExtResource("2_dxmjo")]([SubResource("Resource_4rivy"), SubResource("Resource_dxmjo"), SubResource("Resource_hrwrj"), SubResource("Resource_neujr"), SubResource("Resource_ybyfi"), SubResource("Resource_43rrr")])
 metadata/_custom_type_script = "uid://dfo5rpkmr57w2"

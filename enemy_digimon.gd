@@ -124,3 +124,29 @@ func _return_home() -> void:
 			face_direction = "Front" if to_home.y > 0.0 else "Back"
 	else:
 		velocity = Vector2.ZERO
+
+
+# ------------------ XP REWARD ON DEATH ------------------
+
+func die() -> void:
+	_give_xp_to_pet()
+	super.die()
+
+
+func _give_xp_to_pet() -> void:
+	var pets := get_tree().get_nodes_in_group("PetDigimon")
+	if pets.is_empty():
+		return
+
+	var pet_node := pets[0]
+	if pet_node == null or not is_instance_valid(pet_node):
+		return
+
+	# Compute XP reward based on enemy level (placeholder curve)
+	var base: float = 10.0
+	var level_factor: float = 1.0 + float(level) * 0.4
+	var xp_reward: int = int(round(base * level_factor))
+
+	# Call add_xp on the pet if it exists
+	if pet_node.has_method("add_xp"):
+		pet_node.call("add_xp", xp_reward)

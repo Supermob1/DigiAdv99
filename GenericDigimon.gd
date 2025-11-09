@@ -4,6 +4,8 @@ class_name GenericDigimon
 signal health_changed(current: int, max: int)
 signal died
 
+const DAMAGE_POPUP_SCENE := preload("res://Scenes/damage_popup.tscn")
+
 # Where all Digimon folders live (BotamonLine, etc.)
 @export_dir var digimon_root_dir: String = "res://Digimon"
 
@@ -25,6 +27,7 @@ signal died
 @export var attack_duration: float = 0.25   # duration of the 2-frame attack
 
 @export var level: int = 1                  # shared by pet / enemies
+@export var display_name: String = ""   # if empty, uses digimon_name
 
 # --- Evolution stat multipliers ---
 @export var evo_hp_multiplier: float = 1.5
@@ -39,6 +42,7 @@ signal died
 @onready var hitbox: Area2D = $Hitbox
 @onready var hit_shape: CollisionShape2D = $Hitbox/HitShape
 @onready var health_bar: TextureProgressBar = get_node_or_null("HealthBar")
+@onready var name_label: Label = get_node_or_null("NameLabel")
 
 # Spritesheet layout (2 frames side view)
 const BODY_HFRAMES := 2
@@ -47,11 +51,11 @@ const ATTACK_HFRAMES := 2
 const ATTACK_VFRAMES := 1
 
 # Box ratios
-const HURTBOX_WIDTH_RATIO := 0.7
-const HURTBOX_HEIGHT_RATIO := 0.7
+const HURTBOX_WIDTH_RATIO := 1.0
+const HURTBOX_HEIGHT_RATIO := 1.0
 const HITBOX_WIDTH_RATIO := 0.7
 const HITBOX_HEIGHT_RATIO := 0.8
-const HITBOX_DISTANCE_RATIO := 0.55
+const HITBOX_DISTANCE_RATIO := 0.75
 
 # Textures
 var body_texture: Texture2D
@@ -84,13 +88,25 @@ const ATTACK_FPS := 8.0
 # directional attack
 var _attack_dir: Vector2 = Vector2.RIGHT
 
-# base stats (used for evolution multipliers)
-var _base_max_health: int = 0
-var _base_attack_damage: int = 0
-var _base_speed: float = 0.0
-
 # evolution state
 var _is_evolved: bool = false
+
+# Stats
+const MAX_LEVEL := 100                    # max level used for scaling
+const MAX_SKILL_VALUE := 100.0            # we treat skills as 0–100
+
+# minimum & maximum baseline "power access" along the evolution line
+const MIN_BASE_ACCESS := 0.10   # baby / in-training
+const MAX_BASE_ACCESS := 0.60   # final form (or close to it)
+
+
+# "full power" stats this Digimon can reach at max level & skills
+var _full_max_health: int = 0
+var _full_attack_damage: int = 0
+var _full_speed: float = 0.0
+var _full_attack_range: float = 0.0
+var _full_attack_cooldown: float = 0.0
+var _full_attack_duration: float = 0.0
 
 
 func _ready() -> void:
@@ -102,24 +118,123 @@ func _ready() -> void:
 	_load_textures_from_root()
 	_setup_body()
 
-	# init health
+	# 1) capture full potential stats from inspector
+	_capture_base_stats()
+	# 2) compute actual usable stats from level/skills/evo
+	_recalculate_combat_stats()
+	
+	# init health (now based on computed max_health)
 	health = max_health
 	if health_bar:
 		health_bar.max_value = max_health
 		health_bar.value = health
 
-	# capture base stats for future evolution multipliers
-	_capture_base_stats()
-
 	if hitbox:
 		hitbox.monitoring = false
 		hitbox.area_entered.connect(_on_hitbox_area_entered)
 
+	_update_name_label()
+	_position_name_label()
 
 func _capture_base_stats() -> void:
-	_base_max_health = max_health
-	_base_attack_damage = attack_damage
-	_base_speed = speed
+	# Whatever max_health / attack_damage / etc are in the inspector,
+	# we treat them as the "full potential" for this species.
+	_full_max_health = max_health
+	_full_attack_damage = attack_damage
+	_full_speed = speed
+	_full_attack_range = attack_range
+	_full_attack_cooldown = attack_cooldown
+	_full_attack_duration = attack_duration
+
+
+func _recalculate_combat_stats() -> void:
+	# Make sure full stats exist (in case someone calls this early)
+	if _full_max_health == 0:
+		_capture_base_stats()
+
+	# --- 1) Normalize level ---
+	var level_norm: float = clamp(level / float(MAX_LEVEL), 0.0, 1.0)
+
+	# --- 2) Get skills from whoever owns them (PetDigimon, enemy, etc.) ---
+	var str_val: float = 0.0
+	var eng_val: float = 0.0
+	var bond_val: float = 0.0
+
+	# We don't reference strength/energy/bond directly, we read them via get()
+	if "strength" in self:
+		str_val = float(self.get("strength"))
+	if "energy" in self:
+		eng_val = float(self.get("energy"))
+	if "bond" in self:
+		bond_val = float(self.get("bond"))
+
+	var strength_norm: float = clamp(str_val / MAX_SKILL_VALUE, 0.0, 1.0)
+	var energy_norm: float = clamp(eng_val / MAX_SKILL_VALUE, 0.0, 1.0)
+	var bond_norm: float = clamp(bond_val / MAX_SKILL_VALUE, 0.0, 1.0)
+
+	# --- 3) Baseline access: evo reduces penalty of low skills ---
+	var base_min: float = _get_stage_base_access()
+
+	# -------- HEALTH (Energy) --------
+	var hp_access: float = base_min + (1.0 - base_min) * energy_norm
+	var hp_fraction: float = level_norm * hp_access
+	max_health = max(1, int(round(_full_max_health * hp_fraction)))
+
+	# -------- ATTACK DAMAGE (Strength) --------
+	var dmg_access: float = base_min + (1.0 - base_min) * strength_norm
+	var dmg_fraction: float = level_norm * dmg_access
+	attack_damage = max(1, int(round(_full_attack_damage * dmg_fraction)))
+
+	# -------- SPEED (Bond + Strength) --------
+	var spd_skill: float = (bond_norm * 0.6 + strength_norm * 0.4)
+	var spd_access: float = base_min + (1.0 - base_min) * spd_skill
+	var spd_fraction: float = level_norm * spd_access
+	speed = _full_speed * (0.30 + 0.70 * spd_fraction)
+
+	# -------- ATTACK RANGE (Bond) --------
+	var range_access: float = base_min + (1.0 - base_min) * bond_norm
+	var range_fraction: float = level_norm * range_access
+	attack_range = _full_attack_range * (0.40 + 0.60 * range_fraction)
+
+	# -------- ATTACK COOLDOWN (lower is better) (Bond + Strength) --------
+	var cd_skill: float = (bond_norm + strength_norm) * 0.5
+	var cd_access: float = base_min + (1.0 - base_min) * cd_skill
+	var cd_fraction: float = level_norm * cd_access
+	var cd_scale: float = 1.8 - 1.0 * cd_fraction   # ~1.8x slower → ~0.8x faster
+	attack_cooldown = _full_attack_cooldown * cd_scale
+
+	# -------- ATTACK DURATION (lower is better) (Bond) --------
+	var dur_access: float = base_min + (1.0 - base_min) * bond_norm
+	var dur_fraction: float = level_norm * dur_access
+	var dur_scale: float = 1.4 - 0.6 * dur_fraction  # 1.4x → 0.8x
+	attack_duration = _full_attack_duration * dur_scale
+
+	# -------- Clamp current health to new max --------
+	if health > max_health:
+		health = max_health
+	if health_bar:
+		health_bar.max_value = max_health
+		health_bar.value = health
+
+
+func _get_stage_base_access() -> float:
+	# If we can't ask the DB, just fall back to a safe baby value.
+	if not is_instance_valid(DigimonEvolutionDb):
+		return MIN_BASE_ACCESS
+
+	var info: Dictionary = DigimonEvolutionDb.get_stage_info_for(digimon_name)
+	var idx: int = int(info.get("index", 0))
+	var count: int = int(info.get("count", 1))
+
+	if count <= 1:
+		return MIN_BASE_ACCESS
+
+	# 0.0 for first form, 1.0 for last form
+	var t: float = clamp(idx / float(count - 1), 0.0, 1.0)
+
+	# interpolate between MIN_BASE_ACCESS and MAX_BASE_ACCESS
+	return lerp(MIN_BASE_ACCESS, MAX_BASE_ACCESS, t)
+
 
 
 # ----------------- AUTOLOADING TEXTURES BY NAME -----------------
@@ -187,6 +302,19 @@ func _setup_body() -> void:
 	# ⬇️ ADD THIS to set up the HealthBar automatically
 	_setup_health_bar()
 
+func _update_name_label() -> void:
+	if name_label == null:
+		return
+
+	var name_text := display_name
+	if name_text == "":
+		# falls back to whatever you use as internal name
+		if "digimon_name" in self:
+			name_text = str(digimon_name)
+		else:
+			name_text = name
+
+	name_label.text = "%s  Lv.%d" % [name_text, level]
 
 
 func _physics_process(delta: float) -> void:
@@ -325,6 +453,22 @@ func _setup_health_bar() -> void:
 	health_bar.max_value = max_health
 	health_bar.value = health
 
+func _position_name_label() -> void:
+	if name_label == null:
+		return
+
+	# center horizontally on the Digimon
+	name_label.position.x = -14.0
+
+	if health_bar:
+		# just above the HP bar
+		name_label.position.y = health_bar.position.y - 8.0
+	else:
+		# fallback: above sprite center
+		name_label.position.y = -16.0
+
+
+
 # ----------------- SIZE / COLLISION BOXES -----------------
 
 func _apply_frame_size_and_boxes(frame_size: Vector2) -> void:
@@ -351,6 +495,7 @@ func _apply_frame_size_and_boxes(frame_size: Vector2) -> void:
 			frame_size_scaled.y * HITBOX_HEIGHT_RATIO
 		)
 		hit_shape.position = Vector2.ZERO
+	_position_name_label()
 
 
 func _update_hitbox_direction() -> void:
@@ -383,6 +528,9 @@ func take_damage(amount: int) -> void:
 	_hurt_flash_timer = HURT_FLASH_TIME
 	sprite.modulate = Color(1.0, 0.6, 0.6)
 
+	# ✨ damage popup
+	_spawn_damage_popup(amount)
+
 	if health_bar:
 		health_bar.value = health
 
@@ -390,6 +538,35 @@ func take_damage(amount: int) -> void:
 
 	if health <= 0:
 		die()
+
+
+func _spawn_damage_popup(amount: int) -> void:
+	if amount <= 0:
+		return
+	if DAMAGE_POPUP_SCENE == null:
+		return
+
+	var popup := DAMAGE_POPUP_SCENE.instantiate()
+	popup.amount = amount
+
+	# Color: red if this is the pet taking damage, white otherwise
+	var col := Color.WHITE
+	if is_in_group("PetDigimon"):
+		col = Color(1.0, 0.3, 0.3)
+	popup.base_color = col
+
+	var root := get_tree().current_scene
+	if root == null:
+		return
+
+	# 🔹 Set position BEFORE adding to the tree
+	#    (so _ready() sees the correct local position)
+	popup.global_position = global_position + Vector2(0, -10)
+
+	root.add_child(popup)
+
+
+
 
 
 func die() -> void:
@@ -445,19 +622,17 @@ func try_digivolve(active_conditions: Array[StringName] = []) -> bool:
 func _apply_evolution_step(step: DigivolutionStep) -> void:
 	_is_evolved = true
 	digimon_name = step.to_name
+	display_name = str(step.to_name)
 
 	_load_textures_from_root()
 	_setup_body()
 
-	# multiply from stored base stats
-	max_health = int(round(_base_max_health * evo_hp_multiplier))
-	attack_damage = int(round(_base_attack_damage * evo_attack_multiplier))
-	speed = _base_speed * evo_speed_multiplier
+	# 🔹 NEW: recalc stats with evo baseline (less penalty for low skills)
+	_recalculate_combat_stats()
 
-	health = max_health
-	if health_bar:
-		health_bar.max_value = max_health
-		health_bar.value = health
+	# name & label position
+	_update_name_label()
+	_position_name_label()
 
 
 func regress_to_base_form() -> void:
@@ -466,19 +641,26 @@ func regress_to_base_form() -> void:
 
 	_is_evolved = false
 	digimon_name = base_form_name
+	display_name = str(base_form_name)
 
 	_load_textures_from_root()
 	_setup_body()
 
-	max_health = _base_max_health
-	attack_damage = _base_attack_damage
-	speed = _base_speed
+	# 🔹 NEW: recalc stats back to non-evo baseline
+	_recalculate_combat_stats()
 
+	# clamp health (already done inside recalc but safe)
 	if health > max_health:
 		health = max_health
+
 	if health_bar:
 		health_bar.max_value = max_health
 		health_bar.value = health
+
+	_update_name_label()
+	_position_name_label()
+
+
 
 func is_evolved() -> bool:
 	return _is_evolved

@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://dq8prigm48eq"]
+
+[ext_resource type="FontFile" uid="uid://d1wygwllcbr3p" path="res://fonts/pixel_digivolve.ttf" id="1_bv3wo"]
+[ext_resource type="Script" uid="uid://de2diwv1b873t" path="res://Scenes/damage_popup.gd" id="1_dwj5p"]
+
+[node name="DamagePopup" type="Node2D"]
+script = ExtResource("1_dwj5p")
+
+[node name="Label" type="Label" parent="."]
+offset_right = 40.0
+offset_bottom = 23.0
+scale = Vector2(0.4, 0.4)
+theme_override_fonts/font = ExtResource("1_bv3wo")
+horizontal_alignment = 1
+vertical_alignment = 1

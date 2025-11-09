@@ -4,18 +4,27 @@ enum PetForm { NORMAL, EGG }
 @export var player: Node2D                      # the human character
 @export var enemy_group: StringName = "WildDigimon"
 
-# --- PET STATS ---
-@export var base_max_health: int = 10
+# --- PET STATS (skill values) ---
+@export var base_max_health: int = 10          # (kept for later balancing)
 @export var base_attack_damage: int = 1
 
-@export var energy: int = 0        # increases max HP
-@export_range(0, 100) var bond: int = 0     # 0–100, used for digivolve
-@export var strength: int = 0      # increases base damage
+@export var energy: int = 0        # increases usable max HP
+@export_range(0, 100) var bond: int = 0       # 0–100, used for digivolve & stats
+@export var strength: int = 0      # increases usable attack damage
 
 const HP_PER_ENERGY := 2
 const DAMAGE_PER_STRENGTH := 1
 
-# --- EGG / RESPawn ---
+# --- XP / LEVEL ---
+var xp: int = 0
+var xp_to_next: int = 0
+
+# ✨ XP curve (you can tweak these in the inspector)
+@export var xp_curve_base: int = 20          # base XP needed at level 1
+@export var xp_curve_growth: int = 8         # how much it grows per level
+@export var xp_curve_power: float = 1.4      # curve exponent (higher = steeper)
+
+# --- EGG / RESPAWN ---
 @export var egg_duration: float = 5.0     # seconds as egg before respawning
 
 var form_state: int = PetForm.NORMAL
@@ -37,14 +46,15 @@ var _wander_timer: float = 0.0
 
 
 func _ready() -> void:
-	super._ready()
+	add_to_group("PetDigimon")
+	super._ready()   # GenericDigimon: loads textures + computes stats from level/skills
 
-	# Pet-specific stats sit on top of GenericDigimon stats
+	# XP threshold for current level
+	if xp_to_next <= 0:
+		xp_to_next = _get_xp_to_next_for_level(level)
+
+	# Re-run stats once more in case we tweak the pet exports later
 	_recompute_stats()
-	health = max_health
-	if health_bar:
-		health_bar.max_value = max_health
-		health_bar.value = health
 
 	# egg timer
 	if egg_timer == null:
@@ -56,7 +66,71 @@ func _ready() -> void:
 	_pick_new_wander_offset()
 
 
-# ------------- hook bond into evolution -------------
+# -------------------------------------------------
+#   XP / LEVEL LOGIC
+# -------------------------------------------------
+
+func add_xp(amount: int) -> void:
+	if amount <= 0:
+		return
+	if level >= MAX_LEVEL:
+		return
+
+	xp += amount
+
+	while xp >= xp_to_next and level < MAX_LEVEL:
+		xp -= xp_to_next
+		_level_up()
+
+
+func _level_up() -> void:
+	level += 1
+
+	# Recompute stats for the new level + skills
+	_recompute_stats()
+
+	# Full heal for now – easy to feel the level up
+	health = max_health
+	if health_bar:
+		health_bar.max_value = max_health
+		health_bar.value = health
+
+	# Prepare XP needed for the next level
+	xp_to_next = _get_xp_to_next_for_level(level)
+
+	# 🔹 Update the name label ("Koromon Lv.2", etc.)
+	_update_name_label()
+
+	# 🔹 Spawn a small "Lv X!" popup above the pet (reuses damage_popup)
+	if DAMAGE_POPUP_SCENE != null:
+		var popup := DAMAGE_POPUP_SCENE.instantiate()
+		# Custom text instead of a number
+		if "custom_text" in popup:
+			popup.custom_text = "Lv %d!" % level
+		if "base_color" in popup:
+			popup.base_color = Color(0.7, 1.0, 0.7)  # light green
+
+		var root := get_tree().current_scene
+		if root:
+			popup.global_position = global_position + Vector2(0, -18)
+			root.add_child(popup)
+
+	print("Pet leveled up to level %d" % level)
+
+
+func _get_xp_to_next_for_level(lvl: int) -> int:
+	# XP curve you can tweak in the inspector:
+	# xp_to_next = base + growth * (lvl ^ power)
+	var val: int = int(round(
+		float(xp_curve_base) +
+		pow(float(lvl), xp_curve_power) * float(xp_curve_growth)
+	))
+	return max(1, val)
+
+
+# -------------------------------------------------
+#   HOOK BOND INTO EVOLUTION
+# -------------------------------------------------
 
 func _get_bond_for_evo() -> int:
 	return bond
@@ -87,7 +161,6 @@ func process_ai(delta: float) -> void:
 		return
 
 	# ---- NORMAL FORM ----
-
 	var enemy: Node2D = _find_closest_enemy()
 
 	if enemy:
@@ -102,9 +175,10 @@ func process_ai(delta: float) -> void:
 
 # ------------- STATS -------------
 
+# For now this just asks GenericDigimon to recompute
+# using level + strength/energy/bond.
 func _recompute_stats() -> void:
-	max_health = base_max_health + energy * HP_PER_ENERGY
-	attack_damage = base_attack_damage + strength * DAMAGE_PER_STRENGTH
+	_recalculate_combat_stats()
 
 
 # ------------- EGG LOGIC -------------
@@ -136,7 +210,7 @@ func _become_egg() -> void:
 		health_bar.value = health
 
 	# --- choose egg form from the evolution line ---
-	if is_instance_valid(DigimonEvolutionDB):
+	if is_instance_valid(DigimonEvolutionDb):
 		# Use the partner base form (base_form_name) as reference, else current name
 		var ref_name: StringName = base_form_name if base_form_name != &"" else digimon_name
 		var egg_name: StringName = DigimonEvolutionDb.get_root_form_for(ref_name)
@@ -167,7 +241,7 @@ func _on_egg_timer_timeout() -> void:
 	form_state = PetForm.NORMAL
 
 	# Back to first non-egg form in the evolution line (e.g. Botamon)
-	if is_instance_valid(DigimonEvolutionDB):
+	if is_instance_valid(DigimonEvolutionDb):
 		var ref_name: StringName = base_form_name if base_form_name != &"" else digimon_name
 		var child_name: StringName = DigimonEvolutionDb.get_first_child_after_root(ref_name)
 		digimon_name = child_name
@@ -183,7 +257,7 @@ func _on_egg_timer_timeout() -> void:
 	sprite.scale = Vector2.ONE
 	_setup_body()
 
-	# recompute stats & restore health
+	# recompute stats & restore health using the new form + skills
 	_recompute_stats()
 	health = max_health
 	if health_bar:
@@ -194,7 +268,6 @@ func _on_egg_timer_timeout() -> void:
 		global_position = player.global_position + Vector2(16, 0)
 
 	_play_evolution_glow()
-
 
 
 func _play_evolution_glow() -> void:
@@ -290,7 +363,7 @@ func _update_animation(delta: float) -> void:
 	# If we are an egg, play a simple 2-frame idle animation
 	if form_state == PetForm.EGG:
 		anim_timer += delta
-		var frame := int(anim_timer * egg_idle_fps) % BODY_HFRAMES
+		var frame: int = int(anim_timer * egg_idle_fps) % BODY_HFRAMES
 		sprite.flip_h = false
 		sprite.frame = frame
 		return

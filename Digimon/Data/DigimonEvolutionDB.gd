@@ -49,7 +49,53 @@ func _load_lines() -> void:
 			name = dir.get_next()
 		dir.list_dir_end()
 
+func get_stage_info_for(name: StringName) -> Dictionary:
+	# Return {"index": i, "count": n} where:
+	# - "index" is this form's position in its line (0-based)
+	# - "count" is how many forms total in that line
 
+	# 1) Find the root form of this line (you already have helper for that)
+	var root: StringName = get_root_form_for(name)
+
+	# 2) Build an ordered list of forms from root → last form
+	var forms: Array[StringName] = []
+	var current: StringName = root
+
+	# Safety to avoid infinite loops if data is weird
+	var safety := 64
+
+	while safety > 0 and current != &"":
+		safety -= 1
+
+		if current in forms:
+			break  # loop protection
+
+		forms.append(current)
+
+		# If there is no evolution step starting from this form, we reached the end
+		if not _steps_by_from.has(current) or _steps_by_from[current].is_empty():
+			break
+
+		# For now we assume a simple line (no branching) and take the first step
+		var step: DigivolutionStep = _steps_by_from[current][0]
+		current = step.to_name
+
+	# 3) Find position of our 'name' inside that list
+	var idx := forms.find(name)
+	if idx == -1:
+		# not found: fallback
+		return {
+			"index": 0,
+			"count": max(1, forms.size())
+		}
+
+	return {
+		"index": idx,
+		"count": forms.size()
+	}
+
+
+	
 func get_possible_evolutions(
 	from_name: StringName,
 	level: int,
