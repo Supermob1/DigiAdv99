@@ -1,0 +1,9 @@
+Id=Punimon
+Name=Punimon
+Type=Data
+
+Stage=InTraining
+MinLevel=1
+MinBond=0
+
+Digivolution=[Gabumon]

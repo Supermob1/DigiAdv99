@@ -624,13 +624,25 @@ func _apply_evolution_step(step: DigivolutionStep) -> void:
 	digimon_name = step.to_name
 	display_name = str(step.to_name)
 
+	# Reload visuals
 	_load_textures_from_root()
 	_setup_body()
 
-	# 🔹 NEW: recalc stats with evo baseline (less penalty for low skills)
+	# Recompute stats from level + skills
 	_recalculate_combat_stats()
 
-	# name & label position
+	# Extra buff for evolved forms
+	max_health = int(round(max_health * evo_hp_multiplier))
+	attack_damage = max(1, int(round(attack_damage * evo_attack_multiplier)))
+	speed *= evo_speed_multiplier
+
+	# Clamp health
+	if health > max_health:
+		health = max_health
+	if health_bar:
+		health_bar.max_value = max_health
+		health_bar.value = health
+
 	_update_name_label()
 	_position_name_label()
 
@@ -643,22 +655,22 @@ func regress_to_base_form() -> void:
 	digimon_name = base_form_name
 	display_name = str(base_form_name)
 
+	# Reload visuals
 	_load_textures_from_root()
 	_setup_body()
 
-	# 🔹 NEW: recalc stats back to non-evo baseline
+	# Go back to “non-evolved” version of stats
 	_recalculate_combat_stats()
 
-	# clamp health (already done inside recalc but safe)
 	if health > max_health:
 		health = max_health
-
 	if health_bar:
 		health_bar.max_value = max_health
 		health_bar.value = health
 
 	_update_name_label()
 	_position_name_label()
+
 
 
 

@@ -1,21 +1,55 @@
 extends Node
 class_name DigimonEvolutionDB
 
-# Folder where all DigimonLine.tres live
-@export_dir var lines_root: String = "res://Digimon/Lines"
+# Where all *.mon species files live (we'll scan recursively)
+@export_dir var species_root: String = "res://Digimon/Species"
 
-# from_name -> Array[DigivolutionStep]
-var _steps_by_from: Dictionary = {}
-var _steps_by_to: Dictionary = {}    # NEW: reverse mapping
+# ---------- internal data ----------
+
+class Species:
+	var id: StringName = &""
+	var name: String = ""
+	var type: StringName = &""
+
+	var stage_index: int = 0
+	var stage_name: StringName = &""
+
+	var min_level: int = 1
+	var min_bond: int = 0
+
+	var digivolutions: Array[StringName] = []
+	var preferred_children: Array[StringName] = []
+
+# id -> Species
+var _species_by_id: Dictionary = {}
+# child_id -> Array[parent_id]
+var _parents_by_child: Dictionary = {}
+
+# mapping Stage string -> numeric index
+const STAGE_TO_INDEX := {
+	"egg": 0,
+	"baby": 1,
+	"intraining": 2,
+	"rookie": 3,
+	"champion": 4,
+	"ultimate": 5,
+	"mega": 6,
+	"ultra": 7
+}
 
 func _ready() -> void:
-	_load_lines()
+	_load_species()
 
 
-func _load_lines() -> void:
-	_steps_by_from.clear()
+# ---------------------------------------------------------
+# LOADING / PARSING
+# ---------------------------------------------------------
 
-	var stack: Array[String] = [lines_root]
+func _load_species() -> void:
+	_species_by_id.clear()
+	_parents_by_child.clear()
+
+	var stack: Array[String] = [species_root]
 
 	while stack.size() > 0:
 		var dir_path: String = stack.pop_back()
@@ -30,72 +64,213 @@ func _load_lines() -> void:
 				if not name.begins_with("."):
 					stack.append(dir_path + "/" + name)
 			else:
-				var ext := name.get_extension().to_lower()
-				if ext == "tres" or ext == "res":
-					var res_path := dir_path + "/" + name
-					var line_res := load(res_path)
-					if line_res is DigimonLine:
-						var line: DigimonLine = line_res
-						for step in line.steps:
-							if step.from_name == "":
-								continue
-							if not _steps_by_from.has(step.from_name):
-								_steps_by_from[step.from_name] = []
-							_steps_by_from[step.from_name].append(step)
-							if not _steps_by_to.has(step.to_name):
-								_steps_by_to[step.to_name] = []
-							_steps_by_to[step.to_name].append(step)
-
+				if name.get_extension().to_lower() == "mon":
+					_parse_mon_file(dir_path + "/" + name)
 			name = dir.get_next()
 		dir.list_dir_end()
 
+	_build_parent_map()
+	print("Loaded species:", _species_by_id.keys())
+
+
+func _build_parent_map() -> void:
+	_parents_by_child.clear()
+
+	for s in _species_by_id.values():
+		var species: Species = s
+		for child_id in species.digivolutions:
+			if not _parents_by_child.has(child_id):
+				_parents_by_child[child_id] = []
+			var arr: Array = _parents_by_child[child_id]
+			arr.append(species.id)
+			_parents_by_child[child_id] = arr
+
+
+func _parse_mon_file(path: String) -> void:
+	var f := FileAccess.open(path, FileAccess.READ)
+	if f == null:
+		push_error("DigimonEvolutionDB: cannot open species file: %s" % path)
+		return
+
+	var s := Species.new()
+	s.id = &""  # we'll fill from Id or filename
+
+	while not f.eof_reached():
+		var line := f.get_line().strip_edges()
+		if line == "" or line.begins_with("#") or line.begins_with(";"):
+			continue
+
+		var eq := line.find("=")
+		if eq == -1:
+			continue
+
+		var key := line.substr(0, eq).strip_edges()
+		var value := line.substr(eq + 1).strip_edges()
+
+		match key.to_lower():
+			"id":
+				s.id = value
+			"name":
+				s.name = value
+			"type":
+				s.type = value
+			"stage":
+				s.stage_name = value
+				s.stage_index = _stage_string_to_index(value)
+			"stageindex":
+				s.stage_index = int(value)
+			"minlevel":
+				s.min_level = int(value)
+			"minbond":
+				s.min_bond = int(value)
+			"digivolution":
+				s.digivolutions = _parse_list(value)
+			"preferred":
+				s.preferred_children = _parse_list(value)
+
+	f.close()
+
+	# Fallback id from filename
+	if s.id == &"":
+		var base := path.get_file().get_basename()
+		s.id = base
+
+	# Register in dictionary
+	_species_by_id[s.id] = s
+
+
+func _stage_string_to_index(stage: String) -> int:
+	var key := stage.strip_edges().to_lower().replace(" ", "")
+	if STAGE_TO_INDEX.has(key):
+		return STAGE_TO_INDEX[key]
+	return 0  # default to egg/baby if unknown
+
+
+func _parse_list(raw: String) -> Array[StringName]:
+	var txt := raw.strip_edges()
+	if txt.begins_with("[") and txt.ends_with("]"):
+		txt = txt.substr(1, txt.length() - 2)
+
+	if txt == "":
+		return []
+
+	var parts := txt.split(",", false)
+	var out: Array[StringName] = []
+	for p in parts:
+		var id := p.strip_edges()
+		if id != "":
+			out.append(id)
+	return out
+
+
+func _cmp_species_by_stage(a: Species, b: Species) -> int:
+	if a.stage_index == b.stage_index:
+		return 0
+	return -1 if a.stage_index < b.stage_index else 1
+
+
+# ---------------------------------------------------------
+# INTERNAL HELPERS
+# ---------------------------------------------------------
+
+func get_species(id: StringName) -> Species:
+	return _species_by_id.get(id, null)
+
+
+func get_root_form_for(name: StringName) -> StringName:
+	var current_id: StringName = name
+	var current := get_species(current_id)
+	if current == null:
+		return name
+
+	while _parents_by_child.has(current_id) and (_parents_by_child[current_id] as Array).size() > 0:
+		var best_parent_id: StringName = current_id
+		var best_parent := current
+
+		for pid in _parents_by_child[current_id]:
+			var ps := get_species(pid)
+			if ps == null:
+				continue
+			if ps.stage_index < best_parent.stage_index:
+				best_parent = ps
+				best_parent_id = ps.id
+
+		if best_parent_id == current_id:
+			break
+		current_id = best_parent_id
+		current = best_parent
+
+	return current_id
+
+
+# ---------------------------------------------------------
+# PUBLIC API – USED BY YOUR OTHER SCRIPTS
+# ---------------------------------------------------------
+
+# Used by GenericDigimon._get_stage_base_access()
 func get_stage_info_for(name: StringName) -> Dictionary:
-	# Return {"index": i, "count": n} where:
-	# - "index" is this form's position in its line (0-based)
-	# - "count" is how many forms total in that line
+	var s := get_species(name)
+	if s == null:
+		return {"index": 0, "count": 1}
 
-	# 1) Find the root form of this line (you already have helper for that)
-	var root: StringName = get_root_form_for(name)
+	var root_id := get_root_form_for(name)
 
-	# 2) Build an ordered list of forms from root → last form
-	var forms: Array[StringName] = []
-	var current: StringName = root
+	var visited := {}
+	var ordered: Array[Species] = []
+	var queue: Array[StringName] = [root_id]
 
-	# Safety to avoid infinite loops if data is weird
-	var safety := 64
+	while queue.size() > 0:
+		var cur_id: StringName = queue.pop_front()
+		if visited.has(cur_id):
+			continue
+		visited[cur_id] = true
 
-	while safety > 0 and current != &"":
-		safety -= 1
+		var cur := get_species(cur_id)
+		if cur == null:
+			continue
 
-		if current in forms:
-			break  # loop protection
+		ordered.append(cur)
 
-		forms.append(current)
+		for child_id in cur.digivolutions:
+			if not visited.has(child_id):
+				queue.append(child_id)
 
-		# If there is no evolution step starting from this form, we reached the end
-		if not _steps_by_from.has(current) or _steps_by_from[current].is_empty():
+	if ordered.is_empty():
+		return {"index": 0, "count": 1}
+
+	ordered.sort_custom(Callable(self, "_cmp_species_by_stage"))
+
+	var idx := 0
+	for i in ordered.size():
+		if ordered[i].id == name:
+			idx = i
 			break
 
-		# For now we assume a simple line (no branching) and take the first step
-		var step: DigivolutionStep = _steps_by_from[current][0]
-		current = step.to_name
-
-	# 3) Find position of our 'name' inside that list
-	var idx := forms.find(name)
-	if idx == -1:
-		# not found: fallback
-		return {
-			"index": 0,
-			"count": max(1, forms.size())
-		}
-
-	return {
-		"index": idx,
-		"count": forms.size()
-	}
+	return {"index": idx, "count": ordered.size()}
 
 
-	
+# Used by PetDigimon egg logic
+func get_first_child_after_root(ref_name: StringName) -> StringName:
+	var root_id := get_root_form_for(ref_name)
+	var root := get_species(root_id)
+	if root == null:
+		return ref_name
+
+	var best_child_id: StringName = root_id
+	var best_stage := 999
+
+	for child_id in root.digivolutions:
+		var cs := get_species(child_id)
+		if cs == null:
+			continue
+		if cs.stage_index > root.stage_index and cs.stage_index < best_stage:
+			best_stage = cs.stage_index
+			best_child_id = cs.id
+
+	return best_child_id
+
+
+# Main evolution query, used by GenericDigimon.try_digivolve()
 func get_possible_evolutions(
 	from_name: StringName,
 	level: int,
@@ -104,41 +279,27 @@ func get_possible_evolutions(
 ) -> Array[DigivolutionStep]:
 	var results: Array[DigivolutionStep] = []
 
-	if not _steps_by_from.has(from_name):
+	var from_species := get_species(from_name)
+	if from_species == null:
 		return results
 
-	for step in _steps_by_from[from_name]:
-		if level < step.min_level:
-			continue
-		if bond < step.min_bond:
+	for child_id in from_species.digivolutions:
+		var target := get_species(child_id)
+		if target == null:
 			continue
 
-		# if a special condition is required, it must be in active_conditions
-		if step.special_condition != &"" and step.special_condition not in active_conditions:
+		if level < target.min_level:
 			continue
+		if bond < target.min_bond:
+			continue
+
+		var step := DigivolutionStep.new()
+		step.from_name = from_name
+		step.to_name = target.id
+		step.min_level = target.min_level
+		step.min_bond = target.min_bond
+		step.special_condition = &""
 
 		results.append(step)
 
 	return results
-	
-func get_root_form_for(name: StringName) -> StringName:
-	# Walk backwards as long as there is a step that evolves INTO "current"
-	var current: StringName = name
-
-	while _steps_by_to.has(current) and _steps_by_to[current].size() > 0:
-		# assume a simple line; if multiple, we just pick the first
-		var prev_step: DigivolutionStep = _steps_by_to[current][0]
-		current = prev_step.from_name
-
-	return current
-	
-func get_first_child_after_root(ref_name: StringName) -> StringName:
-	var root: StringName = get_root_form_for(ref_name)
-
-	# If the root has at least one evolution step, return its first child
-	if _steps_by_from.has(root) and _steps_by_from[root].size() > 0:
-		var step: DigivolutionStep = _steps_by_from[root][0]
-		return step.to_name
-
-	# Fallback if there are no children in the line
-	return root

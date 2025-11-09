@@ -2592,6 +2592,7 @@ script = ExtResource("1_ioo17")
 pet = NodePath("../Node2D/PetDigimon")
 
 [node name="PauseMenu" parent="HUD" instance=ExtResource("10_wse8f")]
+metadata/_edit_use_anchors_ = true
 
 [node name="Ground" type="TileMapLayer" parent="."]
 z_index = -5
@@ -2614,6 +2615,8 @@ position = Vector2(8, 48)
 script = ExtResource("4_pkg7o")
 player = NodePath("../Player")
 enemy_group = &"WildDigimon"
+grab_distance = 16.0
+carry_offset = Vector2(0, -10)
 base_max_health = 10
 base_attack_damage = 1
 energy = 0
@@ -2631,6 +2634,8 @@ egg_scale = 0.6
 egg_idle_fps = 2.0
 egg_offset = Vector2(20, 0)
 digimon_name = "Punimon"
+base_form_name = &"Punimon"
+level = 0
 
 [node name="StaticBody2D" type="StaticBody2D" parent="Node2D"]
 disable_mode = 2

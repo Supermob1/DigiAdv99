@@ -1,0 +1,9 @@
+Id=PuniTama
+Name=Puni Digitama
+Type=Free
+
+Stage=Egg
+MinLevel=1
+MinBond=0
+
+Digivolution=[Punimon]

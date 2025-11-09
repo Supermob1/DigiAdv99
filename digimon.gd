@@ -4,6 +4,12 @@ enum PetForm { NORMAL, EGG }
 @export var player: Node2D                      # the human character
 @export var enemy_group: StringName = "WildDigimon"
 
+
+# --- CARRY / GRAB ---
+@export var grab_distance: float = 16.0         # how close you need to be
+@export var carry_offset: Vector2 = Vector2(0, -10)
+
+var is_carried: bool = false
 # --- PET STATS (skill values) ---
 @export var base_max_health: int = 10          # (kept for later balancing)
 @export var base_attack_damage: int = 1
@@ -139,6 +145,29 @@ func _get_bond_for_evo() -> int:
 # ------------- INPUT: Digivolve button instead of Attack -------------
 
 func _physics_process(delta: float) -> void:
+
+	# Toggle grab / drop
+	if Input.is_action_just_pressed("pet_grab") and player:
+		var dist_to_player := (player.global_position - global_position).length()
+		if not is_carried and dist_to_player <= grab_distance:
+			# Pick up
+			is_carried = true
+			velocity = Vector2.ZERO
+			hitbox.monitoring = false
+			hurtbox.monitoring = false
+		elif is_carried:
+			# Drop
+			is_carried = false
+			hitbox.monitoring = true
+			hurtbox.monitoring = true
+
+	# If carried, just stick to the player and skip AI
+	if is_carried and player:
+		global_position = player.global_position + carry_offset
+		velocity = Vector2.ZERO
+		super._physics_process(delta)  # keep animations running
+		return
+		
 	# Player presses “digivolve” instead of attack
 	if form_state == PetForm.NORMAL and Input.is_action_just_pressed("digimon_digivolve"):
 		try_digivolve()
@@ -151,6 +180,10 @@ func _physics_process(delta: float) -> void:
 # --------------------- AI OVERRIDE ---------------------
 
 func process_ai(delta: float) -> void:
+	if is_carried:
+		velocity = Vector2.ZERO
+		return
+		
 	if not player:
 		velocity = Vector2.ZERO
 		return
