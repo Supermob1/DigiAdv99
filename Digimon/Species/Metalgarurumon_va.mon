@@ -1,0 +1,10 @@
+Id=Metalgarurumon_va
+Name=Metalgarurumon_va
+Type=Data
+Stage=Ultra
+MinLevel=1
+MinBond=0
+
+Digivolution=[]
+
+# Customize Type, Stage, MinLevel, MinBond, Digivolution manually later.

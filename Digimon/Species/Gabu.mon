@@ -1,9 +1,0 @@
-Id=Gabumon
-Name=Gabumon
-Type=Data
-
-Stage=Rookie
-MinLevel=5
-MinBond=0
-
-Digivolution=[Garurumon]

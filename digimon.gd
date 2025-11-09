@@ -1,4 +1,5 @@
 extends GenericDigimon
+class_name PetDigimon
 enum PetForm { NORMAL, EGG }
 
 @export var player: Node2D                      # the human character
@@ -53,6 +54,17 @@ var _wander_timer: float = 0.0
 
 func _ready() -> void:
 	add_to_group("PetDigimon")
+	
+
+	# 🔹 Set partner species from current tamer BEFORE GenericDigimon._ready()
+	if is_instance_valid(Game_Data):
+		var cfg := Game_Data.get_current_tamer()
+		if cfg.has("partner_id"):
+			var partner_id: StringName = cfg["partner_id"]
+			digimon_name = partner_id
+			base_form_name = partner_id
+
+
 	super._ready()   # GenericDigimon: loads textures + computes stats from level/skills
 
 	# XP threshold for current level
@@ -72,6 +84,35 @@ func _ready() -> void:
 	_pick_new_wander_offset()
 
 
+# 🔹 helper: re-apply partner when the player changes tamer
+func refresh_from_tamer() -> void:
+	if not is_instance_valid(GameData):
+		return
+
+	var cfg := Game_Data.get_current_tamer()
+	if not cfg.has("partner_id"):
+		return
+
+	var partner_id: StringName = cfg["partner_id"]
+
+	form_state = PetForm.NORMAL
+	is_attacking = false
+	attack_cooldown_timer = 0.0
+	hitbox.monitoring = false
+
+	digimon_name = partner_id
+	base_form_name = partner_id
+
+	_load_textures_from_root()
+	sprite.scale = Vector2.ONE
+	_setup_body()
+
+	_recompute_stats()
+	health = max_health
+	if health_bar:
+		health_bar.max_value = max_health
+		health_bar.value = health
+		
 # -------------------------------------------------
 #   XP / LEVEL LOGIC
 # -------------------------------------------------

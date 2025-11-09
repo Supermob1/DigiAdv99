@@ -1,0 +1,10 @@
+Id=Picodevimon
+Name=Picodevimon
+Type=Data
+Stage=Champion
+MinLevel=1
+MinBond=0
+
+Digivolution=[]
+
+# Customize Type, Stage, MinLevel, MinBond, Digivolution manually later.

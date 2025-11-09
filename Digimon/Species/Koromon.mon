@@ -1,0 +1,10 @@
+Id=Koromon
+Name=Koromon
+Type=Data
+Stage=Rookie
+MinLevel=1
+MinBond=0
+
+Digivolution=[]
+
+# Customize Type, Stage, MinLevel, MinBond, Digivolution manually later.

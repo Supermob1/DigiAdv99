@@ -6,11 +6,16 @@
 [node name="PetDigimon" instance=ExtResource("1_4umun")]
 script = ExtResource("2_axe34")
 enemy_group = &"WildDigimon"
+grab_distance = 16.0
+carry_offset = Vector2(0, -10)
 base_max_health = 10
 base_attack_damage = 1
 energy = 0
 bond = 0
 strength = 0
+xp_curve_base = 20
+xp_curve_growth = 8
+xp_curve_power = 1.4
 egg_duration = 5.0
 wander_radius = 32.0
 wander_change_interval = 1.5

@@ -23,15 +23,14 @@ var current_skin_index: int = 0
 var face_direction: String = \"Front\"
 var animation_to_play: String = \"Front_Idle\"
 
+# cache of loaded textures, keyed by tamer id
+var _skin_cache: Dictionary = {}
+
 func _ready() -> void:
 	# Apply sprite scale
 	sprite.scale = Vector2.ONE * sprite_scale
 
-	if skins.is_empty():
-		push_warning(\"PlayerCharacter: 'skins' array is empty – assign some textures in the Inspector.\")
-	else:
-		_apply_skin_index(0)
-
+	_apply_tamer_skin()
 	animation_player.stop()
 	animation_player.play(\"Front_Idle\")
 
@@ -49,10 +48,6 @@ func _ignore_digimon_collisions() -> void:
 
 
 func _physics_process(_delta: float) -> void:
-	if Input.is_action_just_pressed(\"swap_skin\") and skins.size() > 0:
-		var next_index := (current_skin_index + 1) % skins.size()
-		_apply_skin_index(next_index)
-
 	var input_vector := Vector2.ZERO
 	input_vector.x = Input.get_action_strength(\"ui_right\") - Input.get_action_strength(\"ui_left\")
 	input_vector.y = Input.get_action_strength(\"ui_down\") - Input.get_action_strength(\"ui_up\")
@@ -79,13 +74,30 @@ func _physics_process(_delta: float) -> void:
 		animation_player.play(animation_to_play)
 
 	move_and_slide()
-
-
-func _apply_skin_index(index: int) -> void:
-	if skins.is_empty():
+	
+func _apply_tamer_skin() -> void:
+	# Called from PauseMenu when the player changes tamer
+	if not is_instance_valid(GameData):
 		return
-	current_skin_index = clamp(index, 0, skins.size() - 1)
-	sprite.texture = skins[current_skin_index]
+
+	var tamer_id: StringName = Game_Data.current_tamer_id
+	var cfg: Dictionary = GameData.TAMERS.get(tamer_id, {})
+
+	print(\"PlayerCharacter: applying skin for tamer_id =\", tamer_id)
+
+	if cfg.is_empty():
+		print(\"PlayerCharacter: no config for this tamer, aborting\")
+		return
+
+	# You store a preloaded Texture2D under \"player_texture\"
+	var tex: Texture2D = cfg.get(\"player_texture\", null)
+
+	if tex == null:
+		print(\"PlayerCharacter: player_texture is null, aborting\")
+		return
+
+	sprite.texture = tex
+	print(\"PlayerCharacter: sprite texture changed\")
 "
 
 [sub_resource type="Animation" id="Animation_4sjlk"]

@@ -1,9 +1,10 @@
 Id=PuniTama
-Name=Puni Digitama
-Type=Free
-
+Name=PuniTama
+Type=Data
 Stage=Egg
 MinLevel=1
 MinBond=0
 
-Digivolution=[Punimon]
+Digivolution=[]
+
+# Customize Type, Stage, MinLevel, MinBond, Digivolution manually later.

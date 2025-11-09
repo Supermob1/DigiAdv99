@@ -1,0 +1,10 @@
+Id=Kokatorimon
+Name=Kokatorimon
+Type=Data
+Stage=Ultimate
+MinLevel=1
+MinBond=0
+
+Digivolution=[]
+
+# Customize Type, Stage, MinLevel, MinBond, Digivolution manually later.
