@@ -1,0 +1,74 @@
+[gd_scene load_steps=4 format=3 uid="uid://b1y77bdfleuts"]
+
+[ext_resource type="Texture2D" uid="uid://dxa8j61ich0ph" path="res://textures/UI/UI_health_bar_bg.png" id="1_on50t"]
+[ext_resource type="Script" uid="uid://bi8r35wmk0wx3" path="res://Scenes/hud.gd" id="1_prn5u"]
+[ext_resource type="Texture2D" uid="uid://dl0jf2ortj36d" path="res://textures/UI/UI_health_bar_fill.png" id="2_prn5u"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_prn5u")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PetPanel" type="MarginContainer" parent="Root"]
+layout_mode = 1
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Root/PetPanel"]
+layout_mode = 2
+
+[node name="PetNameLabel" type="Label" parent="Root/PetPanel/VBoxContainer"]
+layout_mode = 2
+text = "Koromon"
+
+[node name="PetHpBar" type="TextureProgressBar" parent="Root/PetPanel/VBoxContainer"]
+layout_mode = 2
+texture_under = ExtResource("1_on50t")
+texture_progress = ExtResource("2_prn5u")
+
+[node name="StatsRow1" type="HBoxContainer" parent="Root/PetPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="LevelLabel" type="Label" parent="Root/PetPanel/VBoxContainer/StatsRow1"]
+layout_mode = 2
+text = "Lv 1"
+
+[node name="StrengthLabel" type="Label" parent="Root/PetPanel/VBoxContainer/StatsRow1"]
+layout_mode = 2
+text = "50"
+
+[node name="EnergyLabel" type="Label" parent="Root/PetPanel/VBoxContainer/StatsRow1"]
+layout_mode = 2
+text = "50"
+
+[node name="BondLabel" type="Label" parent="Root/PetPanel/VBoxContainer"]
+layout_mode = 2
+text = "Bond: 0"
+
+[node name="DigivolveLabel" type="Label" parent="Root/PetPanel/VBoxContainer"]
+layout_mode = 2
+text = "Cannot Digivolve"
+
+[node name="DigivolvePrompt" type="Label" parent="Root"]
+visible = false
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -92.0
+offset_top = -23.0
+offset_right = 92.0
+grow_horizontal = 2
+grow_vertical = 0
+text = "Press [E] to Digivolve"
+horizontal_alignment = 1
+vertical_alignment = 2
+uppercase = true

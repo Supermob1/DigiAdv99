@@ -47,11 +47,11 @@ const ATTACK_HFRAMES := 2
 const ATTACK_VFRAMES := 1
 
 # Box ratios
-const HURTBOX_WIDTH_RATIO := 0.5
+const HURTBOX_WIDTH_RATIO := 0.7
 const HURTBOX_HEIGHT_RATIO := 0.7
-const HITBOX_WIDTH_RATIO := 0.6
-const HITBOX_HEIGHT_RATIO := 0.4
-const HITBOX_DISTANCE_RATIO := 0.45
+const HITBOX_WIDTH_RATIO := 0.7
+const HITBOX_HEIGHT_RATIO := 0.8
+const HITBOX_DISTANCE_RATIO := 0.55
 
 # Textures
 var body_texture: Texture2D

@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://bb6xfjrcgpv2s"]
+
+[ext_resource type="Script" uid="uid://c2d03246insvc" path="res://enemy_spawner.gd" id="1_4l55s"]
+[ext_resource type="PackedScene" uid="uid://bhp1kakrbpvid" path="res://enemy_digimon.tscn" id="2_8h7h8"]
+
+[node name="EnemySpawner" type="Node2D"]
+script = ExtResource("1_4l55s")
+enemy_scene = ExtResource("2_8h7h8")
+spawn_points = Array[Vector2]([Vector2(0, 0)])

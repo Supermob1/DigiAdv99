@@ -1,5 +1,4 @@
 extends GenericDigimon
-
 enum PetForm { NORMAL, EGG }
 
 @export var player: Node2D                      # the human character

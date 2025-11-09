@@ -1,0 +1,55 @@
+[gd_resource type="Resource" script_class="DigimonLine" load_steps=9 format=3 uid="uid://bmhk0qh7anown"]
+
+[ext_resource type="Script" uid="uid://dfo5rpkmr57w2" path="res://Digimon/Data/DigimonLine.gd" id="1_4rivy"]
+[ext_resource type="Script" uid="uid://dr40mh3ivyxc5" path="res://Digimon/Data/DigivolutionStep.gd" id="2_dxmjo"]
+
+[sub_resource type="Resource" id="Resource_4rivy"]
+script = ExtResource("2_dxmjo")
+from_name = &"Nyokimon_Digitama"
+to_name = &"Nyokimon"
+metadata/_custom_type_script = "uid://dr40mh3ivyxc5"
+
+[sub_resource type="Resource" id="Resource_dxmjo"]
+script = ExtResource("2_dxmjo")
+from_name = &"Nyokimon"
+to_name = &"Pyocomon"
+min_level = 10
+min_bond = 5
+metadata/_custom_type_script = "uid://dr40mh3ivyxc5"
+
+[sub_resource type="Resource" id="Resource_hrwrj"]
+script = ExtResource("2_dxmjo")
+from_name = &"Pyocomon"
+to_name = &"Piyomon"
+min_level = 15
+min_bond = 10
+metadata/_custom_type_script = "uid://dr40mh3ivyxc5"
+
+[sub_resource type="Resource" id="Resource_neujr"]
+script = ExtResource("2_dxmjo")
+from_name = &"Piyomon"
+to_name = &"Birdramon"
+min_level = 20
+min_bond = 20
+metadata/_custom_type_script = "uid://dr40mh3ivyxc5"
+
+[sub_resource type="Resource" id="Resource_ybyfi"]
+script = ExtResource("2_dxmjo")
+from_name = &"Birdramon"
+to_name = &"Garudamon"
+min_level = 30
+min_bond = 30
+metadata/_custom_type_script = "uid://dr40mh3ivyxc5"
+
+[sub_resource type="Resource" id="Resource_43rrr"]
+script = ExtResource("2_dxmjo")
+from_name = &"Garudamon"
+to_name = &"Hououmon"
+min_level = 40
+min_bond = 50
+metadata/_custom_type_script = "uid://dr40mh3ivyxc5"
+
+[resource]
+script = ExtResource("1_4rivy")
+steps = Array[ExtResource("2_dxmjo")]([SubResource("Resource_4rivy"), SubResource("Resource_dxmjo"), SubResource("Resource_hrwrj"), SubResource("Resource_neujr"), SubResource("Resource_ybyfi"), SubResource("Resource_43rrr")])
+metadata/_custom_type_script = "uid://dfo5rpkmr57w2"
